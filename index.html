@@ -99,6 +99,7 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <div id="pendingNotice" class="card hidden">
 <h2>Konto noch nicht freigeschaltet</h2>
 <p>Dein Konto wurde erstellt, muss aber erst von der Serverleitung freigeschaltet werden.</p>
+<p class="status">Sobald dein Konto freigeschaltet wurde, kannst du dich anmelden und alle freigegebenen Bereiche nutzen.</p>
 </div>
 
 <div id="mainContent">
@@ -223,9 +224,54 @@ const SITE_URL='https://hamburgcityrpdev.github.io/hamburg-city-rp-teamverwaltun
 const approvedRoles=['staff','moderator','management','owner'];
 let accessCheckInterval=null;
 
-function isModerator(){return currentProfile&&['moderator','management','owner'].includes(currentProfile.role)}
-function canManage(){return currentProfile&&['management','owner'].includes(currentProfile.role)}
-function isOwner(){return currentProfile&&currentProfile.role==='owner'}
+/*
+Neue sichtbare Teamrollen:
+serverteam    -> staff
+highteam      -> moderator
+leitungsebene -> management
+
+Dadurch bleiben die bestehenden Supabase-Berechtigungen erhalten.
+*/
+const roleOptions=[
+ {value:'pending',label:'Ausstehend'},
+ {value:'staff',label:'Staff (bisherige Rolle)'},
+ {value:'serverteam',label:'———Serverteam———'},
+ {value:'moderator',label:'Moderator (bisherige Rolle)'},
+ {value:'highteam',label:'———Highteam———'},
+ {value:'management',label:'Management (bisherige Rolle)'},
+ {value:'leitungsebene',label:'———Leitungsebene———'},
+ {value:'owner',label:'Owner'}
+];
+
+const roleMappings={
+ serverteam:{role:'staff',rank:'———Serverteam———'},
+ highteam:{role:'moderator',rank:'———Highteam———'},
+ leitungsebene:{role:'management',rank:'———Leitungsebene———'}
+};
+
+function isModerator(){
+ return currentProfile&&['moderator','management','owner'].includes(currentProfile.role);
+}
+function canManage(){
+ return currentProfile&&['management','owner'].includes(currentProfile.role);
+}
+function isOwner(){
+ return currentProfile&&currentProfile.role==='owner';
+}
+function isApproved(role){
+ return approvedRoles.includes(role);
+}
+function getRoleOption(member){
+ if(member.role==='staff'&&member.rank_name==='———Serverteam———')return 'serverteam';
+ if(member.role==='moderator'&&member.rank_name==='———Highteam———')return 'highteam';
+ if(member.role==='management'&&member.rank_name==='———Leitungsebene———')return 'leitungsebene';
+ return member.role||'pending';
+}
+function getRoleLabel(member){
+ if(member.rank_name)return member.rank_name;
+ const option=roleOptions.find(item=>item.value===member.role);
+ return option?option.label:member.role||'Ausstehend';
+}
 
 function connect(){
  const url=document.getElementById('projectUrl').value.trim();
@@ -316,7 +362,6 @@ async function openDashboard(user){
   return;
  }
 
- // Falls Discord verwendet wurde und noch kein Benutzername existiert.
  if(!data.display_name){
   const enteredName=prompt('Bitte lege deinen Benutzernamen fest:');
   if(!enteredName||enteredName.trim().length<3){
@@ -339,10 +384,10 @@ async function openDashboard(user){
  document.getElementById('setup').classList.add('hidden');
  document.getElementById('dashboard').classList.remove('hidden');
  document.getElementById('welcome').textContent='Angemeldet als '+data.display_name;
- document.getElementById('role').textContent='Deine Rolle: '+(data.rank_name||data.role||'Nicht freigeschaltet');
- document.getElementById('homeRank').textContent='Dein Teamrang: '+(data.rank_name||data.role||'Nicht festgelegt');
+ document.getElementById('role').textContent='Deine Rolle: '+getRoleLabel(data);
+ document.getElementById('homeRank').textContent='Dein Teamrang: '+getRoleLabel(data);
 
- const pending=!approvedRoles.includes(data.role);
+ const pending=!isApproved(data.role);
  document.getElementById('pendingNotice').classList.toggle('hidden',!pending);
  document.getElementById('mainContent').classList.toggle('hidden',pending);
  document.getElementById('linkDiscordButton').classList.toggle('hidden',data.role!=='owner');
@@ -394,7 +439,7 @@ async function linkDiscord(){
 // SANKTIONEN
 async function createSanction(){
  const message=document.getElementById('sanctionMessage');
- if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){message.textContent='Du bist nicht berechtigt.';return}
+ if(!currentUser||!currentProfile||!isApproved(currentProfile.role)){message.textContent='Du bist nicht berechtigt.';return}
  const robloxId=document.getElementById('robloxId').value.trim();
  const robloxUsername=document.getElementById('robloxUsername').value.trim();
  const actionType=document.getElementById('actionType').value;
@@ -402,7 +447,7 @@ async function createSanction(){
  const details=document.getElementById('sanctionDetails').value.trim();
  if(!robloxId||!robloxUsername||!title||!details){message.textContent='Bitte fülle alle Felder aus.';return}
  if(!/^[0-9]+$/.test(robloxId)){message.textContent='Die Roblox User-ID darf nur Zahlen enthalten.';return}
- if(actionType!=='warning'&&!isModerator()){message.textContent='Nur Moderatoren und die Leitung dürfen Kicks und Banns eintragen.';return}
+ if(actionType!=='warning'&&!isModerator()){message.textContent='Nur Highteam, Leitungsebene und Owner dürfen Kicks und Banns eintragen.';return}
  message.textContent='Maßnahme wird gespeichert...';
  const {error}=await db.from('staff_records').insert({
   module:'sanction',action_type:actionType,roblox_user_id:robloxId,
@@ -452,7 +497,7 @@ async function deleteSanction(id){
 // NOTIZEN
 async function createNote(){
  const message=document.getElementById('noteMessage');
- if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){message.textContent='Du hast keine Berechtigung.';return}
+ if(!currentUser||!currentProfile||!isApproved(currentProfile.role)){message.textContent='Du hast keine Berechtigung.';return}
  const title=document.getElementById('noteTitle').value.trim();
  const details=document.getElementById('noteDetails').value.trim();
  if(!title||!details){message.textContent='Bitte Titel und Notiz ausfüllen.';return}
@@ -511,7 +556,7 @@ function renderDutyStatus(){
  }
 }
 async function startDuty(){
- if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){alert('Du bist nicht berechtigt, Dienst zu starten.');return}
+ if(!currentUser||!currentProfile||!isApproved(currentProfile.role)){alert('Du bist nicht berechtigt, Dienst zu starten.');return}
  if(activeDuty){alert('Du bist bereits im Dienst.');return}
  const {data,error}=await db.from('duty_entries').insert({user_id:currentUser.id}).select('id,started_at,ended_at').single();
  if(error){document.getElementById('dutyMessage').textContent='Dienst konnte nicht gestartet werden: '+error.message;return}
@@ -561,23 +606,56 @@ async function loadTeam(){
 
   const roleLabel=document.createElement('label');roleLabel.textContent='Rolle';card.appendChild(roleLabel);
   const role=document.createElement('select');
-  ['pending','staff','moderator','management','owner'].forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;role.appendChild(option)});
-  role.value=member.role||'pending';card.appendChild(role);
+  roleOptions.forEach(item=>{
+   const option=document.createElement('option');
+   option.value=item.value;
+   option.textContent=item.label;
+   role.appendChild(option);
+  });
+  role.value=getRoleOption(member);
+  card.appendChild(role);
 
-  const rankLabel=document.createElement('label');rankLabel.textContent='Teamrang';card.appendChild(rankLabel);
-  const rank=document.createElement('input');rank.value=member.rank_name||'';rank.placeholder='z. B. Moderator';card.appendChild(rank);
+  const rankLabel=document.createElement('label');rankLabel.textContent='Teamrang / zusätzliche Bezeichnung';card.appendChild(rankLabel);
+  const rank=document.createElement('input');
+  rank.value=member.rank_name||'';
+  rank.placeholder='z. B. —— — Teammitglied';
+  card.appendChild(rank);
 
-  const save=document.createElement('button');save.textContent='Änderungen speichern';save.onclick=()=>saveMember(member.id,member.display_name,rank.value,role.value);card.appendChild(save);
+  const save=document.createElement('button');
+  save.textContent='Änderungen speichern';
+  save.onclick=()=>saveMember(member.id,rank.value,role.value);
+  card.appendChild(save);
   list.appendChild(card);
  });
 }
 
-async function saveMember(id,name,rank,role){
+async function saveMember(id,rank,selectedRole){
  if(!isOwner()){alert('Keine Berechtigung.');return}
- if(id===currentUser.id&&role!=='owner'){alert('Du kannst dir selbst nicht den Owner-Rang entziehen.');return}
- const {error}=await db.from('profiles').update({rank_name:rank.trim(),role:role}).eq('id',id);
+
+ let databaseRole=selectedRole;
+ let finalRank=rank.trim();
+
+ if(roleMappings[selectedRole]){
+  databaseRole=roleMappings[selectedRole].role;
+  if(!finalRank)finalRank=roleMappings[selectedRole].rank;
+ }
+
+ if(id===currentUser.id&&databaseRole!=='owner'){
+  alert('Du kannst dir selbst nicht den Owner-Rang entziehen.');
+  return;
+ }
+
+ if(roleMappings[selectedRole]&&(!finalRank||finalRank===selectedRole)){
+  finalRank=roleMappings[selectedRole].rank;
+ }
+
+ const {error}=await db.from('profiles')
+  .update({rank_name:finalRank,role:databaseRole})
+  .eq('id',id);
+
  if(error){alert('Speichern fehlgeschlagen: '+error.message);return}
- alert('Änderungen gespeichert.');await loadTeam();
+ alert('Änderungen gespeichert.');
+ await loadTeam();
  if(id===currentUser.id)await openDashboard(currentUser);
 }
 
@@ -614,6 +692,11 @@ async function loadMembers(){
   id.textContent='Benutzer-ID: '+member.id;
   card.appendChild(id);
 
+  const roleInfo=document.createElement('p');
+  roleInfo.className='small';
+  roleInfo.textContent='Rolle: '+getRoleLabel(member);
+  card.appendChild(roleInfo);
+
   const nameLabel=document.createElement('label');
   nameLabel.textContent='Benutzername ändern';
   card.appendChild(nameLabel);
@@ -629,16 +712,29 @@ async function loadMembers(){
   nameButton.onclick=()=>changeUsername(member.id,nameInput.value);
   card.appendChild(nameButton);
 
-  const state=document.createElement('p');
-  if(member.is_active===false){
+  // NEU: Ausstehende Konten direkt freischalten
+  if(member.role==='pending'){
+   const pendingState=document.createElement('p');
+   pendingState.innerHTML='<span class="tag warning-tag">AUSSTEHEND</span>';
+   card.appendChild(pendingState);
+
+   const approveButton=document.createElement('button');
+   approveButton.className='success';
+   approveButton.textContent='Konto freischalten';
+   approveButton.onclick=()=>approveMember(member.id,member.display_name||'dieses Mitglied');
+   card.appendChild(approveButton);
+  }else if(member.is_active===false){
+   const state=document.createElement('p');
    state.innerHTML='<span class="tag ban-tag">GESPERRT</span>';
    if(member.ban_until)state.textContent+=' Gesperrt bis: '+new Date(member.ban_until).toLocaleString('de-DE');
    else state.textContent+=' Dauerhafte Sperre';
    if(member.ban_reason)state.textContent+=' | Grund: '+member.ban_reason;
+   card.appendChild(state);
   }else{
+   const state=document.createElement('p');
    state.innerHTML='<span class="tag">AKTIV</span>';
+   card.appendChild(state);
   }
-  card.appendChild(state);
 
   if(member.id!==currentUser.id&&member.role!=='owner'){
    const separator=document.createElement('hr');
@@ -702,6 +798,29 @@ async function loadMembers(){
 
   list.appendChild(card);
  });
+}
+
+// NEU: KONTO FREISCHALTEN
+async function approveMember(id,name){
+ if(!isOwner()){alert('Nur der Owner darf Konten freischalten.');return}
+ if(!confirm('Möchtest du '+name+' freischalten und dem Serverteam zuweisen?'))return;
+
+ const {error}=await db.from('profiles').update({
+  role:'staff',
+  rank_name:'———Serverteam———',
+  is_active:true,
+  ban_until:null,
+  ban_reason:null
+ }).eq('id',id).eq('role','pending');
+
+ if(error){
+  alert('Freischaltung fehlgeschlagen: '+error.message);
+  return;
+ }
+
+ alert(name+' wurde freigeschaltet und dem Serverteam zugewiesen.');
+ await loadMembers();
+ await loadTeam();
 }
 
 async function changeUsername(id,newName){
