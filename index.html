@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -670,7 +669,6 @@ async function loadMembers(){
   id.textContent='Benutzer-ID: '+member.id;
   card.appendChild(id);
 
-  // Benutzername
   const nameLabel=document.createElement('label');
   nameLabel.textContent='Benutzername';
   card.appendChild(nameLabel);
@@ -681,7 +679,6 @@ async function loadMembers(){
   nameInput.placeholder='Benutzername';
   card.appendChild(nameInput);
 
-  // Rolle
   const roleLabel=document.createElement('label');
   roleLabel.textContent='Teamrolle';
   card.appendChild(roleLabel);
@@ -708,7 +705,6 @@ async function loadMembers(){
   roleSelect.value=roleNames[member.role]?member.role:'pending';
   card.appendChild(roleSelect);
 
-  // Teamrang
   const rankLabel=document.createElement('label');
   rankLabel.textContent='Teamrang / eigene Rangbezeichnung';
   card.appendChild(rankLabel);
@@ -720,15 +716,20 @@ async function loadMembers(){
 
   const saveButton=document.createElement('button');
   saveButton.textContent='Änderungen speichern';
-  saveButton.onclick=()=>saveMemberSettings(
-   member.id,
-   nameInput.value,
-   roleSelect.value,
-   rankInput.value
-  );
+
+  // TEST: Prüfen, ob der Button ausgelöst wird
+  saveButton.onclick=()=>{
+   alert('Der Speichern-Button funktioniert!');
+   saveMemberSettings(
+    member.id,
+    nameInput.value,
+    roleSelect.value,
+    rankInput.value
+   );
+  };
+
   card.appendChild(saveButton);
 
-  // Status
   const state=document.createElement('p');
   if(member.role==='pending'){
    state.innerHTML='<span class="tag warning-tag">AUSSTEHEND</span>';
@@ -742,7 +743,6 @@ async function loadMembers(){
   }
   card.appendChild(state);
 
-  // Konto freischalten
   if(member.role==='pending'){
    const approveButton=document.createElement('button');
    approveButton.className='success';
@@ -755,7 +755,6 @@ async function loadMembers(){
    card.appendChild(approveButton);
   }
 
-  // Sperren und Löschen nur für Owner
   if(isOwner()&&member.id!==currentUser.id&&member.role!=='owner'){
    const separator=document.createElement('hr');
    card.appendChild(separator);
