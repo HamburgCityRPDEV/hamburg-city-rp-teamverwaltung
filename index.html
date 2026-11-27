@@ -19,6 +19,7 @@ input,select{width:100%;padding:13px;margin:8px 0 15px;border-radius:7px;border:
 button{background:#087de0;color:white;border:0;border-radius:7px;padding:12px 18px;margin:5px 4px 5px 0;font-weight:bold;cursor:pointer}
 button:hover{background:#1595ff}
 .secondary{background:#263b59}
+.discord{background:#5865F2}
 .hidden{display:none!important}
 nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 .status{color:#9eb8d8;font-size:14px}
@@ -51,12 +52,22 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 
 <section id="auth" class="card hidden">
 <h2>Team-Login</h2>
+
+<button class="discord" onclick="loginWithDiscord()">
+Mit Discord anmelden
+</button>
+
+<p class="status">Oder alternativ mit E-Mail anmelden:</p>
+
 <label>E-Mail-Adresse</label>
 <input id="email" type="email" placeholder="E-Mail">
+
 <label>Passwort</label>
 <input id="password" type="password" placeholder="Passwort">
+
 <button onclick="login()">Anmelden</button>
 <button class="secondary" onclick="register()">Konto erstellen</button>
+
 <div id="message"></div>
 </section>
 
@@ -67,14 +78,24 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 <p id="welcome"></p>
 <p id="role" class="status"></p>
 
-<button onclick="linkDiscord()">Discord mit meinem Konto verbinden</button>
+<button id="linkDiscordButton" onclick="linkDiscord()">
+Discord mit meinem Konto verbinden
+</button>
+
 <p id="discordMessage" class="status">
-Dein Discord-Konto ist noch nicht geprüft.
+Dein Discord-Konto wird geprüft.
 </p>
 
 <button class="secondary" onclick="logout()">Abmelden</button>
 </div>
 
+<div id="pendingNotice" class="card hidden">
+<h2>Konto noch nicht freigeschaltet</h2>
+<p>Dein Konto wurde erstellt, muss aber erst von der Serverleitung freigeschaltet werden.</p>
+<p>Du kannst dich später erneut anmelden.</p>
+</div>
+
+<div id="mainContent">
 <nav>
 <button onclick="showPage('home')">Übersicht</button>
 <button onclick="showPage('team')">Teamverwaltung</button>
@@ -128,7 +149,7 @@ Dein Discord-Konto ist noch nicht geprüft.
 <h2>Interne Notizen</h2>
 <p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
-
+</div>
 </section>
 </main>
 
@@ -150,6 +171,7 @@ function connect(){
 
  try{
   db=window.supabase.createClient(url,key);
+
   localStorage.setItem('hcrp_url',url);
   localStorage.setItem('hcrp_key',key);
 
@@ -163,6 +185,8 @@ function connect(){
 }
 
 async function register(){
+ if(!db)return;
+
  const email=document.getElementById('email').value.trim();
  const password=document.getElementById('password').value;
 
@@ -178,6 +202,8 @@ async function register(){
 }
 
 async function login(){
+ if(!db)return;
+
  const email=document.getElementById('email').value.trim();
  const password=document.getElementById('password').value;
 
@@ -191,10 +217,37 @@ async function login(){
  await openDashboard(data.user);
 }
 
+async function loginWithDiscord(){
+ if(!db){
+  alert('Bitte zuerst das System verbinden.');
+  return;
+ }
+
+ document.getElementById('message').textContent=
+ 'Du wirst zu Discord weitergeleitet...';
+
+ const {error}=await db.auth.signInWithOAuth({
+  provider:'discord',
+  options:{
+   redirectTo:SITE_URL
+  }
+ });
+
+ if(error){
+  document.getElementById('message').textContent=
+   'Discord-Anmeldung fehlgeschlagen: '+error.message;
+ }
+}
+
 async function checkSession(){
  if(!db)return;
 
- const {data}=await db.auth.getSession();
+ const {data,error}=await db.auth.getSession();
+
+ if(error){
+  document.getElementById('message').textContent=error.message;
+  return;
+ }
 
  if(data.session){
   await openDashboard(data.session.user);
@@ -204,28 +257,20 @@ async function checkSession(){
 async function openDashboard(user){
  currentUser=user;
 
- document.getElementById('auth').classList.add('hidden');
- document.getElementById('setup').classList.add('hidden');
- document.getElementById('dashboard').classList.remove('hidden');
-
- document.getElementById('welcome').textContent=
- 'Angemeldet als '+(user.email||'Discord-Konto');
-
  const {data,error}=await db.from('profiles')
  .select('id,email,display_name,role,rank_name,is_active')
  .eq('id',user.id)
  .single();
 
- if(error){
-  document.getElementById('role').textContent=
-  'Profil konnte nicht geladen werden: '+error.message;
+ if(error||!data){
+  document.getElementById('auth').classList.remove('hidden');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('message').textContent=
+   'Für dein Konto wurde noch kein Teamprofil angelegt. Bitte wende dich an die Serverleitung.';
   return;
  }
 
  currentProfile=data;
-
- document.getElementById('role').textContent=
- 'Deine Rolle: '+(data.role||'Nicht freigeschaltet');
 
  if(data.is_active===false){
   alert('Dein Konto ist deaktiviert.');
@@ -233,7 +278,28 @@ async function openDashboard(user){
   return;
  }
 
- await checkDiscordLink();
+ document.getElementById('auth').classList.add('hidden');
+ document.getElementById('setup').classList.add('hidden');
+ document.getElementById('dashboard').classList.remove('hidden');
+
+ document.getElementById('welcome').textContent=
+ 'Angemeldet als '+(data.display_name||user.email||'Discord-Konto');
+
+ document.getElementById('role').textContent=
+ 'Deine Rolle: '+(data.role||'Nicht freigeschaltet');
+
+ const isPending=data.role==='pending'||!data.role;
+
+ document.getElementById('pendingNotice').classList.toggle('hidden',!isPending);
+ document.getElementById('mainContent').classList.toggle('hidden',isPending);
+
+ document.getElementById('linkDiscordButton').classList.toggle(
+  'hidden',data.role!=='owner'
+ );
+
+ if(!isPending){
+  await checkDiscordLink();
+ }
 }
 
 async function checkDiscordLink(){
