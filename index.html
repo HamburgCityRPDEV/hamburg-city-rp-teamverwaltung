@@ -244,7 +244,6 @@ function isOwner(){
  return currentProfile&&currentProfile.role==='owner';
 }
 
-// Die Teamverwaltung ist Owner-only, passend zur Supabase-RPC.
 function canManageMembers(){
  return isOwner();
 }
@@ -908,41 +907,74 @@ async function approveMember(id,name,role,rank){
  await loadMembers();
 }
 
-// MITGLIEDER SPERREN
+// MITGLIEDER SPERREN ÜBER DIE SUPABASE-RPC
 async function suspendMember(id,minutes,reason){
- if(!isOwner()){alert('Nur der Owner darf Mitglieder sperren.');return}
- if(id===currentUser.id){alert('Du kannst dich nicht selbst sperren.');return}
+ if(!isOwner()){
+  alert('Nur der Owner darf Mitglieder sperren.');
+  return;
+ }
+
+ if(id===currentUser.id){
+  alert('Du kannst dich nicht selbst sperren.');
+  return;
+ }
 
  let until=null;
+
  if(minutes!==null){
   const value=Number(minutes);
+
   if(!Number.isInteger(value)||value<1||value>525600){
    alert('Bitte eine Minutenzahl zwischen 1 und 525600 eingeben.');
    return;
   }
+
   until=new Date(Date.now()+value*60000).toISOString();
  }
 
- const {error}=await db.from('profiles').update({
-  is_active:false,
-  ban_until:until,
-  ban_reason:reason.trim()||'Keine Begründung angegeben'
- }).eq('id',id);
+ const {data,error}=await db.rpc('owner_suspend_team_member',{
+  p_user_id:id,
+  p_ban_until:until,
+  p_ban_reason:reason.trim()||'Keine Begründung angegeben'
+ });
 
- if(error){alert('Sperren fehlgeschlagen: '+error.message);return}
+ if(error){
+  alert('Sperren fehlgeschlagen: '+error.message);
+  return;
+ }
+
+ if(data!==true){
+  alert('Die Sperre wurde nicht gespeichert.');
+  return;
+ }
+
  alert(until?'Mitglied wurde zeitlich begrenzt gesperrt.':'Mitglied wurde dauerhaft gesperrt.');
  await loadMembers();
 }
 
+// SPERRE AUFHEBEN ÜBER DIE SUPABASE-RPC
 async function unsuspendMember(id){
- if(!isOwner()){alert('Nur der Owner darf Sperren aufheben.');return}
+ if(!isOwner()){
+  alert('Nur der Owner darf Sperren aufheben.');
+  return;
+ }
+
  if(!confirm('Möchtest du dieses Mitglied wieder freischalten?'))return;
 
- const {error}=await db.from('profiles').update({
-  is_active:true,ban_until:null,ban_reason:null
- }).eq('id',id);
+ const {data,error}=await db.rpc('owner_unsuspend_team_member',{
+  p_user_id:id
+ });
 
- if(error){alert('Freigabe fehlgeschlagen: '+error.message);return}
+ if(error){
+  alert('Freigabe fehlgeschlagen: '+error.message);
+  return;
+ }
+
+ if(data!==true){
+  alert('Die Sperre konnte nicht aufgehoben werden.');
+  return;
+ }
+
  alert('Mitglied wurde wieder freigeschaltet.');
  await loadMembers();
 }
