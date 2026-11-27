@@ -33,10 +33,10 @@ button:hover{background:#1595ff}
 .discord{background:#5865F2}
 .danger{background:#a83242}
 .danger:hover{background:#d94355}
+.success{background:#16794a}
 .hidden{display:none!important}
 nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 .status{color:#9eb8d8;font-size:14px}
-#message{padding:10px;color:#75bcff}
 .member,.record{
  background:#0b172a;border:1px solid #29415f;
  border-radius:9px;padding:15px;margin:12px 0
@@ -49,6 +49,9 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 .warning-tag{background:#806019}
 .kick-tag{background:#8a4b18}
 .ban-tag{background:#8b2637}
+.online{color:#55d995}
+.offline{color:#9eb3d1}
+.big-time{font-size:27px;color:#65b5ff;font-weight:bold}
 </style>
 </head>
 
@@ -60,7 +63,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 
 <main>
 
-<!-- SYSTEM VERBINDEN -->
 <section id="setup" class="card">
 <h2>System verbinden</h2>
 <p>Deine Supabase-Projektdaten eingeben.</p>
@@ -69,10 +71,9 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <label>Public anon / publishable key</label>
 <input id="publicKey" placeholder="Öffentlicher Schlüssel">
 <button onclick="connect()">Verbinden</button>
-<p class="status">Niemals den geheimen service_role-Schlüssel verwenden.</p>
+<p class="status">Nur den öffentlichen anon- oder publishable-Key verwenden. Niemals den service_role-Key eintragen.</p>
 </section>
 
-<!-- LOGIN -->
 <section id="auth" class="card hidden">
 <h2>Team-Login</h2>
 <button class="discord" onclick="loginWithDiscord()">Mit Discord anmelden</button>
@@ -83,17 +84,16 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <input id="password" type="password" placeholder="Passwort">
 <button onclick="login()">Anmelden</button>
 <button class="secondary" onclick="register()">Konto erstellen</button>
-<div id="message"></div>
+<div id="message" class="status"></div>
 </section>
 
-<!-- DASHBOARD -->
 <section id="dashboard" class="hidden">
 
 <div class="card">
 <h2>Willkommen bei Hamburg City RP</h2>
 <p id="welcome"></p>
 <p id="role" class="status"></p>
-<button id="linkDiscordButton" onclick="linkDiscord()">Discord mit meinem Konto verbinden</button>
+<button id="linkDiscordButton" class="discord" onclick="linkDiscord()">Discord mit meinem Konto verbinden</button>
 <p id="discordMessage" class="status"></p>
 <button class="secondary" onclick="logout()">Abmelden</button>
 </div>
@@ -101,14 +101,13 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <div id="pendingNotice" class="card hidden">
 <h2>Konto noch nicht freigeschaltet</h2>
 <p>Dein Konto wurde erstellt, muss aber erst von der Serverleitung freigeschaltet werden.</p>
-<p>Bitte melde dich später erneut an.</p>
 </div>
 
 <div id="mainContent">
 
 <nav>
 <button onclick="showPage('home')">Übersicht</button>
-<button onclick="showPage('sanctions')">Verwarnungen / Kicks / Banns</button>
+<button onclick="showPage('sanctions')">Sanktionen</button>
 <button onclick="showPage('notes')">Notizen</button>
 <button onclick="showPage('announcements')">Ankündigungen</button>
 <button onclick="showPage('handbook')">Team-Handbuch</button>
@@ -116,7 +115,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <button id="teamNavButton" onclick="showPage('team')">Teamverwaltung</button>
 </nav>
 
-<!-- ÜBERSICHT -->
 <div id="home" class="card page">
 <h2>Mitglieder-Dashboard</h2>
 <p>Willkommen im internen Verwaltungsbereich von Hamburg City RP.</p>
@@ -125,7 +123,7 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <div class="grid">
 <div class="member">
 <strong>Sanktionssystem</strong>
-<p class="small">Verwarnungen, Kicks und Banns einsehen und je nach Berechtigung eintragen.</p>
+<p class="small">Verwarnungen, Kicks und Banns ansehen und eintragen.</p>
 <button onclick="showPage('sanctions')">Öffnen</button>
 </div>
 <div class="member">
@@ -134,22 +132,27 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <button onclick="showPage('notes')">Öffnen</button>
 </div>
 <div class="member">
+<strong>Dienstzeiten</strong>
+<p class="small">Dienst starten, beenden und Zeiten einsehen.</p>
+<button onclick="showPage('duty')">Öffnen</button>
+</div>
+<div class="member">
 <strong>Ankündigungen</strong>
 <p class="small">Wichtige Informationen der Serverleitung.</p>
 <button onclick="showPage('announcements')">Öffnen</button>
 </div>
 <div class="member">
 <strong>Team-Handbuch</strong>
-<p class="small">Regeln und wichtige Hinweise.</p>
+<p class="small">Allgemeine Hinweise für das Team.</p>
 <button onclick="showPage('handbook')">Öffnen</button>
 </div>
 </div>
 </div>
 
-<!-- SANKTIONSSYSTEM -->
+<!-- SANKTIONEN -->
 <div id="sanctions" class="card page hidden">
 <h2>Sanktionssystem</h2>
-<p class="status">Alle freigeschalteten Teammitglieder können die eingetragenen Maßnahmen sehen.</p>
+<p class="status">Alle freigeschalteten Teammitglieder können die Maßnahmen ansehen.</p>
 
 <div id="sanctionFormArea">
 <h3>Neue Maßnahme eintragen</h3>
@@ -205,12 +208,10 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <!-- ANKÜNDIGUNGEN -->
 <div id="announcements" class="card page hidden">
 <h2>Ankündigungen</h2>
-<p>Hier erscheinen wichtige Informationen und Neuigkeiten der Serverleitung.</p>
-<div id="announcementList">
 <div class="record">
 <strong>Willkommen im Team!</strong>
 <p>Willkommen im internen Bereich von Hamburg City RP.</p>
-</div>
+<p class="small">Weitere Ankündigungen können später mit einer eigenen Verwaltungsfunktion ergänzt werden.</p>
 </div>
 </div>
 
@@ -231,8 +232,21 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 
 <!-- DIENSTZEITEN -->
 <div id="duty" class="card page hidden">
-<h2>Dienstzeiten</h2>
-<p>Dieser Bereich wird in einem späteren Entwicklungsschritt mit einer Dienstzeiterfassung erweitert.</p>
+<h2>Dienstzeiterfassung</h2>
+
+<div class="member">
+<h3>Mein Dienst</h3>
+<p id="dutyStatus" class="status">Status wird geladen...</p>
+<p id="dutyTimer" class="big-time">00:00:00</p>
+<button id="startDutyButton" class="success" onclick="startDuty()">Dienst starten</button>
+<button id="stopDutyButton" class="danger hidden" onclick="stopDuty()">Dienst beenden</button>
+<p id="dutyMessage" class="status"></p>
+</div>
+
+<hr>
+<h3>Team-Dienstzeiten</h3>
+<button onclick="loadDutyOverview()">Übersicht aktualisieren</button>
+<div id="dutyOverview"></div>
 </div>
 
 <!-- TEAMVERWALTUNG -->
@@ -252,9 +266,10 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 let db=null;
 let currentUser=null;
 let currentProfile=null;
+let activeDuty=null;
+let dutyInterval=null;
 
 const SITE_URL='https://hamburgcityrpdev.github.io/hamburg-city-rp-teamverwaltung/';
-
 const approvedRoles=['staff','moderator','management','owner'];
 
 function isModerator(){
@@ -267,7 +282,6 @@ function canManage(){
  ['management','owner'].includes(currentProfile.role);
 }
 
-// SYSTEM VERBINDEN
 function connect(){
  const url=document.getElementById('projectUrl').value.trim();
  const key=document.getElementById('publicKey').value.trim();
@@ -289,7 +303,6 @@ function connect(){
  }
 }
 
-// REGISTRIERUNG
 async function register(){
  if(!db)return;
  const email=document.getElementById('email').value.trim();
@@ -301,12 +314,10 @@ async function register(){
  }
 
  const {error}=await db.auth.signUp({email,password});
-
  document.getElementById('message').textContent=
  error?error.message:'Registrierung abgeschickt. Dein Konto muss freigeschaltet werden.';
 }
 
-// E-MAIL LOGIN
 async function login(){
  if(!db)return;
  const email=document.getElementById('email').value.trim();
@@ -322,14 +333,11 @@ async function login(){
  await openDashboard(data.user);
 }
 
-// DISCORD LOGIN
 async function loginWithDiscord(){
  if(!db){
   alert('Bitte zuerst das System verbinden.');
   return;
  }
-
- document.getElementById('message').textContent='Du wirst zu Discord weitergeleitet...';
 
  const {error}=await db.auth.signInWithOAuth({
   provider:'discord',
@@ -337,12 +345,10 @@ async function loginWithDiscord(){
  });
 
  if(error){
-  document.getElementById('message').textContent=
-  'Discord-Anmeldung fehlgeschlagen: '+error.message;
+  document.getElementById('message').textContent=error.message;
  }
 }
 
-// SESSION PRÜFEN
 async function checkSession(){
  if(!db)return;
  const {data,error}=await db.auth.getSession();
@@ -357,7 +363,6 @@ async function checkSession(){
  }
 }
 
-// DASHBOARD ÖFFNEN
 async function openDashboard(user){
  currentUser=user;
 
@@ -395,10 +400,9 @@ async function openDashboard(user){
  document.getElementById('homeRank').textContent=
  'Dein Teamrang: '+(data.rank_name||data.role||'Nicht festgelegt');
 
- const isPending=!approvedRoles.includes(data.role);
-
- document.getElementById('pendingNotice').classList.toggle('hidden',!isPending);
- document.getElementById('mainContent').classList.toggle('hidden',isPending);
+ const pending=!approvedRoles.includes(data.role);
+ document.getElementById('pendingNotice').classList.toggle('hidden',!pending);
+ document.getElementById('mainContent').classList.toggle('hidden',pending);
 
  document.getElementById('linkDiscordButton').classList.toggle(
   'hidden',data.role!=='owner'
@@ -408,14 +412,18 @@ async function openDashboard(user){
   'hidden',data.role!=='owner'
  );
 
- if(!isPending){
+ // Normale Teammitglieder können nur Verwarnungen eintragen
+ document.querySelector('#actionType option[value="kick"]').disabled=!isModerator();
+ document.querySelector('#actionType option[value="ban"]').disabled=!isModerator();
+
+ if(!pending){
   await checkDiscordLink();
   await loadSanctions();
   await loadNotes();
+  await loadMyDuty();
  }
 }
 
-// DISCORD STATUS
 async function checkDiscordLink(){
  const message=document.getElementById('discordMessage');
  if(!currentUser||!db)return;
@@ -436,15 +444,13 @@ async function checkDiscordLink(){
  :'Dein Discord-Konto ist noch nicht verbunden.';
 }
 
-// DISCORD VERKNÜPFEN
 async function linkDiscord(){
  if(!db||!currentUser||!currentProfile||currentProfile.role!=='owner'){
   alert('Bitte verwende hierfür dein bestehendes Owner-Konto.');
   return;
  }
 
- const {data:identityData,error:identityError}=
- await db.auth.getUserIdentities();
+ const {data:identityData,error:identityError}=await db.auth.getUserIdentities();
 
  if(identityError){
   alert('Kontostatus konnte nicht geprüft werden: '+identityError.message);
@@ -466,12 +472,10 @@ async function linkDiscord(){
   options:{redirectTo:SITE_URL}
  });
 
- if(error){
-  alert('Discord-Verknüpfung fehlgeschlagen: '+error.message);
- }
+ if(error)alert('Discord-Verknüpfung fehlgeschlagen: '+error.message);
 }
 
-// NEUE SANKTION ERSTELLEN
+// SANKTIONEN
 async function createSanction(){
  const message=document.getElementById('sanctionMessage');
 
@@ -530,17 +534,11 @@ async function createSanction(){
  await loadSanctions();
 }
 
-// SANKTIONEN LADEN
 async function loadSanctions(){
  const list=document.getElementById('sanctionList');
  if(!list||!currentProfile)return;
 
  list.innerHTML='Wird geladen...';
-
- if(!approvedRoles.includes(currentProfile.role)){
-  list.textContent='Keine Berechtigung.';
-  return;
- }
 
  const {data,error}=await db.from('staff_records')
  .select('id,module,action_type,roblox_user_id,roblox_username,title,player,details,status,created_by,created_at')
@@ -564,17 +562,10 @@ async function loadSanctions(){
   card.className='record';
 
   const type=record.action_type||'warning';
-  const labels={
-   warning:'VERWARNUNG',
-   kick:'KICK',
-   ban:'BANN'
-  };
+  const labels={warning:'VERWARNUNG',kick:'KICK',ban:'BANN'};
 
   const tag=document.createElement('span');
-  tag.className='tag '+(
-   type==='ban'?'ban-tag':
-   type==='kick'?'kick-tag':'warning-tag'
-  );
+  tag.className='tag '+(type==='ban'?'ban-tag':type==='kick'?'kick-tag':'warning-tag');
   tag.textContent=labels[type]||'VERWARNUNG';
   card.appendChild(tag);
 
@@ -597,41 +588,33 @@ async function loadSanctions(){
 
   const date=document.createElement('p');
   date.className='small';
-  date.textContent='Datum: '+(
-   record.created_at
-   ?new Date(record.created_at).toLocaleString('de-DE')
-   :'Unbekannt'
-  );
+  date.textContent='Datum: '+(record.created_at?new Date(record.created_at).toLocaleString('de-DE'):'Unbekannt');
   card.appendChild(date);
 
   const creator=document.createElement('p');
   creator.className='small';
-  creator.textContent='Eingetragen von: '+
-   (record.created_by===currentUser.id?'Dir':'Teammitglied');
+  creator.textContent='Eingetragen von: '+(record.created_by===currentUser.id?'Dir':'Teammitglied');
   card.appendChild(creator);
 
   if(canManage()){
-   const deleteButton=document.createElement('button');
-   deleteButton.textContent='Eintrag löschen';
-   deleteButton.className='danger';
-   deleteButton.onclick=()=>deleteSanction(record.id);
-   card.appendChild(deleteButton);
+   const del=document.createElement('button');
+   del.textContent='Eintrag löschen';
+   del.className='danger';
+   del.onclick=()=>deleteSanction(record.id);
+   card.appendChild(del);
   }
 
   list.appendChild(card);
  });
 }
 
-// SANKTION LÖSCHEN
 async function deleteSanction(id){
  if(!canManage()){
   alert('Keine Berechtigung zum Löschen.');
   return;
  }
 
- if(!confirm('Möchtest du diesen Eintrag wirklich dauerhaft löschen?')){
-  return;
- }
+ if(!confirm('Möchtest du diesen Eintrag wirklich dauerhaft löschen?'))return;
 
  const {data,error}=await db.from('staff_records')
  .delete()
@@ -654,7 +637,7 @@ async function deleteSanction(id){
  await loadSanctions();
 }
 
-// NOTIZ ERSTELLEN
+// NOTIZEN
 async function createNote(){
  const message=document.getElementById('noteMessage');
 
@@ -690,7 +673,6 @@ async function createNote(){
  await loadNotes();
 }
 
-// NOTIZEN LADEN
 async function loadNotes(){
  const list=document.getElementById('noteList');
  if(!list||!currentProfile)return;
@@ -728,18 +710,192 @@ async function loadNotes(){
 
   const date=document.createElement('p');
   date.className='small';
-  date.textContent='Erstellt: '+(
-   note.created_at
-   ?new Date(note.created_at).toLocaleString('de-DE')
-   :'Unbekannt'
-  );
+  date.textContent='Erstellt: '+(note.created_at?new Date(note.created_at).toLocaleString('de-DE'):'Unbekannt');
   card.appendChild(date);
 
   list.appendChild(card);
  });
 }
 
-// TEAM LADEN
+// DIENSTZEITEN
+function formatDuration(seconds){
+ seconds=Math.max(0,Math.floor(seconds||0));
+ const hours=Math.floor(seconds/3600);
+ const minutes=Math.floor((seconds%3600)/60);
+ const secs=seconds%60;
+ return String(hours).padStart(2,'0')+':'+
+        String(minutes).padStart(2,'0')+':'+
+        String(secs).padStart(2,'0');
+}
+
+function updateDutyTimer(){
+ const timer=document.getElementById('dutyTimer');
+ if(!activeDuty){
+  timer.textContent='00:00:00';
+  return;
+ }
+
+ const started=new Date(activeDuty.started_at).getTime();
+ const seconds=(Date.now()-started)/1000;
+ timer.textContent=formatDuration(seconds);
+}
+
+async function loadMyDuty(){
+ if(!currentUser)return;
+
+ const {data,error}=await db.from('duty_entries')
+ .select('id,started_at,ended_at')
+ .eq('user_id',currentUser.id)
+ .is('ended_at',null)
+ .maybeSingle();
+
+ if(error){
+  document.getElementById('dutyStatus').textContent=
+  'Fehler beim Laden deines Dienststatus: '+error.message;
+  return;
+ }
+
+ activeDuty=data||null;
+ renderDutyStatus();
+}
+
+function renderDutyStatus(){
+ const status=document.getElementById('dutyStatus');
+ const start=document.getElementById('startDutyButton');
+ const stop=document.getElementById('stopDutyButton');
+
+ if(activeDuty){
+  status.innerHTML='<span class="online">● Du bist aktuell im Dienst.</span>';
+  start.classList.add('hidden');
+  stop.classList.remove('hidden');
+
+  if(dutyInterval)clearInterval(dutyInterval);
+  updateDutyTimer();
+  dutyInterval=setInterval(updateDutyTimer,1000);
+ }else{
+  status.innerHTML='<span class="offline">● Du bist aktuell nicht im Dienst.</span>';
+  start.classList.remove('hidden');
+  stop.classList.add('hidden');
+  document.getElementById('dutyTimer').textContent='00:00:00';
+
+  if(dutyInterval){
+   clearInterval(dutyInterval);
+   dutyInterval=null;
+  }
+ }
+}
+
+async function startDuty(){
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){
+  alert('Du bist nicht berechtigt, Dienst zu starten.');
+  return;
+ }
+
+ if(activeDuty){
+  alert('Du bist bereits im Dienst.');
+  return;
+ }
+
+ const {data,error}=await db.from('duty_entries')
+ .insert({user_id:currentUser.id})
+ .select('id,started_at,ended_at')
+ .single();
+
+ if(error){
+  document.getElementById('dutyMessage').textContent=
+  'Dienst konnte nicht gestartet werden: '+error.message;
+  return;
+ }
+
+ activeDuty=data;
+ document.getElementById('dutyMessage').textContent='Dein Dienst wurde gestartet.';
+ renderDutyStatus();
+ await loadDutyOverview();
+}
+
+async function stopDuty(){
+ if(!activeDuty||!currentUser)return;
+
+ const {data,error}=await db.from('duty_entries')
+ .update({ended_at:new Date().toISOString()})
+ .eq('id',activeDuty.id)
+ .eq('user_id',currentUser.id)
+ .is('ended_at',null)
+ .select('id')
+ .maybeSingle();
+
+ if(error){
+  document.getElementById('dutyMessage').textContent=
+  'Dienst konnte nicht beendet werden: '+error.message;
+  return;
+ }
+
+ if(!data){
+  document.getElementById('dutyMessage').textContent=
+  'Der Dienst konnte nicht beendet werden. Bitte aktualisiere die Seite.';
+  return;
+ }
+
+ activeDuty=null;
+ document.getElementById('dutyMessage').textContent='Dein Dienst wurde beendet.';
+ renderDutyStatus();
+ await loadDutyOverview();
+}
+
+async function loadDutyOverview(){
+ const list=document.getElementById('dutyOverview');
+ if(!list)return;
+
+ list.textContent='Dienstzeiten werden geladen...';
+
+ const {data,error}=await db.rpc('get_duty_overview');
+
+ if(error){
+  list.textContent='Fehler beim Laden der Dienstzeiten: '+error.message;
+  return;
+ }
+
+ list.innerHTML='';
+
+ if(!data||data.length===0){
+  list.textContent='Noch keine Team-Dienstzeiten vorhanden.';
+  return;
+ }
+
+ data.forEach(member=>{
+  const card=document.createElement('div');
+  card.className='record';
+
+  const name=document.createElement('strong');
+  name.textContent=member.display_name||'Teammitglied';
+  card.appendChild(name);
+
+  const rank=document.createElement('p');
+  rank.className='small';
+  rank.textContent=(member.rank_name||member.role||'Teammitglied');
+  card.appendChild(rank);
+
+  const total=document.createElement('p');
+  total.textContent='Gesamte Dienstzeit: '+formatDuration(member.total_seconds);
+  card.appendChild(total);
+
+  const status=document.createElement('p');
+  if(member.active_since){
+   status.innerHTML='<span class="online">● Aktuell im Dienst</span>';
+   const since=document.createElement('p');
+   since.className='small';
+   since.textContent='Dienstbeginn: '+new Date(member.active_since).toLocaleString('de-DE');
+   card.appendChild(since);
+  }else{
+   status.innerHTML='<span class="offline">● Nicht im Dienst</span>';
+  }
+  card.appendChild(status);
+
+  list.appendChild(card);
+ });
+}
+
+// TEAMVERWALTUNG
 async function loadTeam(){
  const list=document.getElementById('teamList');
  const msg=document.getElementById('teamMessage');
@@ -763,11 +919,6 @@ async function loadTeam(){
 
  msg.textContent=data.length+' Teamkonten gefunden.';
 
- if(data.length===0){
-  list.textContent='Noch keine Teamkonten vorhanden.';
-  return;
- }
-
  data.forEach(member=>{
   const card=document.createElement('div');
   card.className='member';
@@ -786,14 +937,12 @@ async function loadTeam(){
   card.appendChild(roleLabel);
 
   const role=document.createElement('select');
-
   ['pending','staff','moderator','management','owner'].forEach(value=>{
    const option=document.createElement('option');
    option.value=value;
    option.textContent=value;
    role.appendChild(option);
   });
-
   role.value=member.role||'pending';
   card.appendChild(role);
 
@@ -820,29 +969,24 @@ async function loadTeam(){
   card.appendChild(activeLabel);
 
   const active=document.createElement('select');
-
   [['true','Ja'],['false','Nein']].forEach(pair=>{
    const option=document.createElement('option');
    option.value=pair[0];
    option.textContent=pair[1];
    active.appendChild(option);
   });
-
   active.value=member.is_active===false?'false':'true';
   card.appendChild(active);
 
   const save=document.createElement('button');
   save.textContent='Änderungen speichern';
-  save.onclick=()=>saveMember(
-   member.id,name.value,rank.value,role.value,active.value
-  );
+  save.onclick=()=>saveMember(member.id,name.value,rank.value,role.value,active.value);
   card.appendChild(save);
 
   list.appendChild(card);
  });
 }
 
-// TEAMMITGLIED SPEICHERN
 async function saveMember(id,name,rank,role,active){
  if(!currentProfile||currentProfile.role!=='owner'){
   alert('Keine Berechtigung.');
@@ -871,18 +1015,17 @@ async function saveMember(id,name,rank,role,active){
  }
 }
 
-// ABMELDEN
 async function logout(){
  if(db)await db.auth.signOut();
  currentUser=null;
  currentProfile=null;
+ if(dutyInterval)clearInterval(dutyInterval);
  location.reload();
 }
 
-// SEITEN WECHSELN
 function showPage(id){
  document.querySelectorAll('.page').forEach(
-  p=>p.classList.add('hidden')
+  page=>page.classList.add('hidden')
  );
 
  if(id==='team'&&(!currentProfile||currentProfile.role!=='owner')){
@@ -895,9 +1038,12 @@ function showPage(id){
  if(id==='sanctions')loadSanctions();
  if(id==='notes')loadNotes();
  if(id==='team')loadTeam();
+ if(id==='duty'){
+  loadMyDuty();
+  loadDutyOverview();
+ }
 }
 
-// AUTOMATISCH VERBINDEN
 window.addEventListener('load',()=>{
  const url=localStorage.getItem('hcrp_url');
  const key=localStorage.getItem('hcrp_key');
