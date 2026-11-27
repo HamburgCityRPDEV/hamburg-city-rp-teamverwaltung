@@ -82,7 +82,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <label>Passwort</label>
 <input id="loginPassword" type="password" placeholder="Passwort">
 <button onclick="login()">Anmelden</button>
-
 <div id="message" class="status"></div>
 </section>
 
@@ -99,7 +98,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <div id="pendingNotice" class="card hidden">
 <h2>Konto noch nicht freigeschaltet</h2>
 <p>Dein Konto wurde erstellt, muss aber erst von der Serverleitung freigeschaltet werden.</p>
-<p class="status">Sobald dein Konto freigeschaltet wurde, kannst du dich anmelden und alle freigegebenen Bereiche nutzen.</p>
 </div>
 
 <div id="mainContent">
@@ -110,7 +108,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <button onclick="showPage('announcements')">Ankündigungen</button>
 <button onclick="showPage('handbook')">Team-Handbuch</button>
 <button onclick="showPage('duty')">Dienstzeiten</button>
-<button id="teamNavButton" class="hidden" onclick="showPage('team')">Teamverwaltung</button>
 <button id="membersNavButton" class="hidden" onclick="showPage('members')">Mitgliederverwaltung</button>
 </nav>
 
@@ -197,18 +194,10 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <div id="dutyOverview"></div>
 </div>
 
-<div id="team" class="card page hidden">
-<h2>Teamverwaltung</h2>
-<p class="status">Nur der Owner kann hier Teamkonten und Berechtigungen verwalten.</p>
-<button onclick="loadTeam()">Team aktualisieren</button>
-<div id="teamMessage" class="status"></div>
-<div id="teamList"></div>
-</div>
-
 <div id="members" class="card page hidden">
 <h2>Mitgliederverwaltung</h2>
-<p class="status">Nur der Owner kann hier Benutzernamen bearbeiten, Zugänge sperren und Konten löschen.</p>
-<p class="small">E-Mail-Adressen in dieser Liste sind ausschließlich für dein Owner-Konto sichtbar.</p>
+<p class="status">Hier verwaltest du Teamrollen, Teamränge, Freischaltungen und Mitgliederkonten.</p>
+<p class="small">Rollen und Ränge können direkt hier geändert werden. E-Mail-Adressen sind ausschließlich für den Owner sichtbar.</p>
 <button onclick="loadMembers()">Mitglieder aktualisieren</button>
 <div id="membersMessage" class="status"></div>
 <div id="membersList"></div>
@@ -221,56 +210,44 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <script>
 let db=null,currentUser=null,currentProfile=null,activeDuty=null,dutyInterval=null;
 const SITE_URL='https://hamburgcityrpdev.github.io/hamburg-city-rp-teamverwaltung/';
-const approvedRoles=['staff','moderator','management','owner'];
 let accessCheckInterval=null;
 
-/*
-Neue sichtbare Teamrollen:
-serverteam    -> staff
-highteam      -> moderator
-leitungsebene -> management
-
-Dadurch bleiben die bestehenden Supabase-Berechtigungen erhalten.
-*/
-const roleOptions=[
- {value:'pending',label:'Ausstehend'},
- {value:'staff',label:'Staff (bisherige Rolle)'},
- {value:'serverteam',label:'———Serverteam———'},
- {value:'moderator',label:'Moderator (bisherige Rolle)'},
- {value:'highteam',label:'———Highteam———'},
- {value:'management',label:'Management (bisherige Rolle)'},
- {value:'leitungsebene',label:'———Leitungsebene———'},
- {value:'owner',label:'Owner'}
-];
-
-const roleMappings={
- serverteam:{role:'staff',rank:'———Serverteam———'},
- highteam:{role:'moderator',rank:'———Highteam———'},
- leitungsebene:{role:'management',rank:'———Leitungsebene———'}
+const roleNames={
+ pending:'Ausstehend',
+ staff:'Staff',
+ moderator:'Moderator',
+ management:'Management',
+ owner:'Owner',
+ serverteam:'———Serverteam———',
+ highteam:'———Highteam———',
+ leitungsebene:'———Leitungsebene———'
 };
 
+const approvedRoles=[
+ 'staff','moderator','management','owner',
+ 'serverteam','highteam','leitungsebene'
+];
+
 function isModerator(){
- return currentProfile&&['moderator','management','owner'].includes(currentProfile.role);
+ return currentProfile&&[
+  'moderator','management','owner','highteam','leitungsebene'
+ ].includes(currentProfile.role);
 }
+
 function canManage(){
- return currentProfile&&['management','owner'].includes(currentProfile.role);
+ return currentProfile&&[
+  'management','owner','leitungsebene'
+ ].includes(currentProfile.role);
 }
+
 function isOwner(){
  return currentProfile&&currentProfile.role==='owner';
 }
-function isApproved(role){
- return approvedRoles.includes(role);
-}
-function getRoleOption(member){
- if(member.role==='staff'&&member.rank_name==='———Serverteam———')return 'serverteam';
- if(member.role==='moderator'&&member.rank_name==='———Highteam———')return 'highteam';
- if(member.role==='management'&&member.rank_name==='———Leitungsebene———')return 'leitungsebene';
- return member.role||'pending';
-}
-function getRoleLabel(member){
- if(member.rank_name)return member.rank_name;
- const option=roleOptions.find(item=>item.value===member.role);
- return option?option.label:member.role||'Ausstehend';
+
+function canManageMembers(){
+ return currentProfile&&[
+  'owner','leitungsebene'
+ ].includes(currentProfile.role);
 }
 
 function connect(){
@@ -298,14 +275,12 @@ async function register(){
  if(!email||password.length<8){alert('Bitte E-Mail und Passwort mit mindestens 8 Zeichen eingeben.');return}
 
  const {data,error}=await db.auth.signUp({
-  email,
-  password,
-  options:{data:{display_name:username}}
+  email,password,options:{data:{display_name:username}}
  });
 
  document.getElementById('message').textContent=error
   ?error.message
-  :'Registrierung abgeschickt. Dein Benutzername lautet '+username+'. Dein Konto muss noch freigeschaltet werden.';
+  :'Registrierung abgeschickt. Dein Konto muss noch freigeschaltet werden.';
 }
 
 async function login(){
@@ -319,7 +294,9 @@ async function login(){
 
 async function loginWithDiscord(){
  if(!db){alert('Bitte zuerst das System verbinden.');return}
- const {error}=await db.auth.signInWithOAuth({provider:'discord',options:{redirectTo:SITE_URL}});
+ const {error}=await db.auth.signInWithOAuth({
+  provider:'discord',options:{redirectTo:SITE_URL}
+ });
  if(error)document.getElementById('message').textContent=error.message;
 }
 
@@ -384,15 +361,16 @@ async function openDashboard(user){
  document.getElementById('setup').classList.add('hidden');
  document.getElementById('dashboard').classList.remove('hidden');
  document.getElementById('welcome').textContent='Angemeldet als '+data.display_name;
- document.getElementById('role').textContent='Deine Rolle: '+getRoleLabel(data);
- document.getElementById('homeRank').textContent='Dein Teamrang: '+getRoleLabel(data);
 
- const pending=!isApproved(data.role);
+ const displayRole=roleNames[data.role]||data.role||'Nicht freigeschaltet';
+ document.getElementById('role').textContent='Deine Rolle: '+displayRole;
+ document.getElementById('homeRank').textContent='Dein Teamrang: '+(data.rank_name||displayRole);
+
+ const pending=!approvedRoles.includes(data.role);
  document.getElementById('pendingNotice').classList.toggle('hidden',!pending);
  document.getElementById('mainContent').classList.toggle('hidden',pending);
  document.getElementById('linkDiscordButton').classList.toggle('hidden',data.role!=='owner');
- document.getElementById('teamNavButton').classList.toggle('hidden',data.role!=='owner');
- document.getElementById('membersNavButton').classList.toggle('hidden',data.role!=='owner');
+ document.getElementById('membersNavButton').classList.toggle('hidden',!canManageMembers());
 
  document.querySelector('#actionType option[value="kick"]').disabled=!isModerator();
  document.querySelector('#actionType option[value="ban"]').disabled=!isModerator();
@@ -439,15 +417,17 @@ async function linkDiscord(){
 // SANKTIONEN
 async function createSanction(){
  const message=document.getElementById('sanctionMessage');
- if(!currentUser||!currentProfile||!isApproved(currentProfile.role)){message.textContent='Du bist nicht berechtigt.';return}
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){message.textContent='Du bist nicht berechtigt.';return}
  const robloxId=document.getElementById('robloxId').value.trim();
  const robloxUsername=document.getElementById('robloxUsername').value.trim();
  const actionType=document.getElementById('actionType').value;
  const title=document.getElementById('sanctionTitle').value.trim();
  const details=document.getElementById('sanctionDetails').value.trim();
+
  if(!robloxId||!robloxUsername||!title||!details){message.textContent='Bitte fülle alle Felder aus.';return}
  if(!/^[0-9]+$/.test(robloxId)){message.textContent='Die Roblox User-ID darf nur Zahlen enthalten.';return}
- if(actionType!=='warning'&&!isModerator()){message.textContent='Nur Highteam, Leitungsebene und Owner dürfen Kicks und Banns eintragen.';return}
+ if(actionType!=='warning'&&!isModerator()){message.textContent='Nur Highteam, Moderatoren und die Leitung dürfen Kicks und Banns eintragen.';return}
+
  message.textContent='Maßnahme wird gespeichert...';
  const {error}=await db.from('staff_records').insert({
   module:'sanction',action_type:actionType,roblox_user_id:robloxId,
@@ -455,6 +435,7 @@ async function createSanction(){
   details:details,status:'open',created_by:currentUser.id
  });
  if(error){message.textContent='Fehler beim Speichern: '+error.message;return}
+
  ['robloxId','robloxUsername','sanctionTitle','sanctionDetails'].forEach(id=>document.getElementById(id).value='');
  document.getElementById('actionType').value='warning';
  message.textContent='Die Maßnahme wurde erfolgreich gespeichert.';
@@ -465,22 +446,41 @@ async function loadSanctions(){
  const list=document.getElementById('sanctionList');
  if(!list||!currentProfile)return;
  list.innerHTML='Wird geladen...';
- const {data,error}=await db.from('staff_records').select('id,module,action_type,roblox_user_id,roblox_username,title,player,details,status,created_by,created_at').in('module',['warning','sanction']).order('created_at',{ascending:false});
+ const {data,error}=await db.from('staff_records')
+ .select('id,module,action_type,roblox_user_id,roblox_username,title,player,details,status,created_by,created_at')
+ .in('module',['warning','sanction']).order('created_at',{ascending:false});
+
  if(error){list.textContent='Fehler beim Laden: '+error.message;return}
  list.innerHTML='';
  if(!data||!data.length){list.textContent='Bisher wurden keine Maßnahmen eingetragen.';return}
+
  data.forEach(record=>{
   const card=document.createElement('div');card.className='record';
   const type=record.action_type||'warning';
   const labels={warning:'VERWARNUNG',kick:'KICK',ban:'BANN'};
-  const tag=document.createElement('span');tag.className='tag '+(type==='ban'?'ban-tag':type==='kick'?'kick-tag':'warning-tag');tag.textContent=labels[type]||'VERWARNUNG';card.appendChild(tag);
-  const heading=document.createElement('h3');heading.textContent=record.roblox_username||record.player||'Unbekannter Spieler';card.appendChild(heading);
-  const id=document.createElement('p');id.className='small';id.textContent='Roblox User-ID: '+(record.roblox_user_id||'Nicht hinterlegt');card.appendChild(id);
+  const tag=document.createElement('span');
+  tag.className='tag '+(type==='ban'?'ban-tag':type==='kick'?'kick-tag':'warning-tag');
+  tag.textContent=labels[type]||'VERWARNUNG';card.appendChild(tag);
+
+  const heading=document.createElement('h3');
+  heading.textContent=record.roblox_username||record.player||'Unbekannter Spieler';card.appendChild(heading);
+
+  const id=document.createElement('p');id.className='small';
+  id.textContent='Roblox User-ID: '+(record.roblox_user_id||'Nicht hinterlegt');card.appendChild(id);
+
   const reason=document.createElement('p');reason.textContent='Grund: '+(record.title||'Keine Angabe');card.appendChild(reason);
   const details=document.createElement('p');details.textContent=record.details||'Keine Beschreibung';card.appendChild(details);
-  const date=document.createElement('p');date.className='small';date.textContent='Datum: '+(record.created_at?new Date(record.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
-  const creator=document.createElement('p');creator.className='small';creator.textContent='Eingetragen von: '+(record.created_by===currentUser.id?'Dir':'Teammitglied');card.appendChild(creator);
-  if(canManage()){const del=document.createElement('button');del.textContent='Eintrag löschen';del.className='danger';del.onclick=()=>deleteSanction(record.id);card.appendChild(del)}
+
+  const date=document.createElement('p');date.className='small';
+  date.textContent='Datum: '+(record.created_at?new Date(record.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
+
+  const creator=document.createElement('p');creator.className='small';
+  creator.textContent='Eingetragen von: '+(record.created_by===currentUser.id?'Dir':'Teammitglied');card.appendChild(creator);
+
+  if(canManage()){
+   const del=document.createElement('button');del.textContent='Eintrag löschen';
+   del.className='danger';del.onclick=()=>deleteSanction(record.id);card.appendChild(del);
+  }
   list.appendChild(card);
  });
 }
@@ -488,7 +488,8 @@ async function loadSanctions(){
 async function deleteSanction(id){
  if(!canManage()){alert('Keine Berechtigung zum Löschen.');return}
  if(!confirm('Möchtest du diesen Eintrag wirklich dauerhaft löschen?'))return;
- const {data,error}=await db.from('staff_records').delete().eq('id',id).in('module',['warning','sanction']).select('id').maybeSingle();
+ const {data,error}=await db.from('staff_records').delete()
+ .eq('id',id).in('module',['warning','sanction']).select('id').maybeSingle();
  if(error){alert('Fehler beim Löschen: '+error.message);return}
  if(!data){alert('Der Eintrag wurde nicht gelöscht. Bitte prüfe die Supabase-Berechtigungen.');return}
  alert('Eintrag erfolgreich gelöscht.');await loadSanctions();
@@ -497,29 +498,40 @@ async function deleteSanction(id){
 // NOTIZEN
 async function createNote(){
  const message=document.getElementById('noteMessage');
- if(!currentUser||!currentProfile||!isApproved(currentProfile.role)){message.textContent='Du hast keine Berechtigung.';return}
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){message.textContent='Du hast keine Berechtigung.';return}
  const title=document.getElementById('noteTitle').value.trim();
  const details=document.getElementById('noteDetails').value.trim();
  if(!title||!details){message.textContent='Bitte Titel und Notiz ausfüllen.';return}
- const {error}=await db.from('staff_records').insert({module:'note',title,details,status:'open',created_by:currentUser.id});
+
+ const {error}=await db.from('staff_records').insert({
+  module:'note',title,details,status:'open',created_by:currentUser.id
+ });
  if(error){message.textContent='Fehler beim Speichern: '+error.message;return}
- document.getElementById('noteTitle').value='';document.getElementById('noteDetails').value='';
- message.textContent='Notiz gespeichert.';await loadNotes();
+
+ document.getElementById('noteTitle').value='';
+ document.getElementById('noteDetails').value='';
+ message.textContent='Notiz gespeichert.';
+ await loadNotes();
 }
 
 async function loadNotes(){
  const list=document.getElementById('noteList');
  if(!list||!currentProfile)return;
  list.innerHTML='Notizen werden geladen...';
- const {data,error}=await db.from('staff_records').select('id,title,details,created_by,created_at').eq('module','note').order('created_at',{ascending:false});
+ const {data,error}=await db.from('staff_records')
+ .select('id,title,details,created_by,created_at')
+ .eq('module','note').order('created_at',{ascending:false});
+
  if(error){list.textContent='Fehler beim Laden: '+error.message;return}
  list.innerHTML='';
  if(!data||!data.length){list.textContent='Noch keine Notizen vorhanden.';return}
+
  data.forEach(note=>{
   const card=document.createElement('div');card.className='record';
   const heading=document.createElement('strong');heading.textContent=note.title||'Notiz';card.appendChild(heading);
   const details=document.createElement('p');details.textContent=note.details||'';card.appendChild(details);
-  const date=document.createElement('p');date.className='small';date.textContent='Erstellt: '+(note.created_at?new Date(note.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
+  const date=document.createElement('p');date.className='small';
+  date.textContent='Erstellt: '+(note.created_at?new Date(note.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
   list.appendChild(card);
  });
 }
@@ -530,19 +542,28 @@ function formatDuration(seconds){
  const hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=seconds%60;
  return String(hours).padStart(2,'0')+':'+String(minutes).padStart(2,'0')+':'+String(secs).padStart(2,'0');
 }
+
 function updateDutyTimer(){
  const timer=document.getElementById('dutyTimer');
  if(!activeDuty){timer.textContent='00:00:00';return}
  timer.textContent=formatDuration((Date.now()-new Date(activeDuty.started_at).getTime())/1000);
 }
+
 async function loadMyDuty(){
  if(!currentUser)return;
- const {data,error}=await db.from('duty_entries').select('id,started_at,ended_at').eq('user_id',currentUser.id).is('ended_at',null).maybeSingle();
+ const {data,error}=await db.from('duty_entries')
+ .select('id,started_at,ended_at').eq('user_id',currentUser.id)
+ .is('ended_at',null).maybeSingle();
+
  if(error){document.getElementById('dutyStatus').textContent='Fehler beim Laden deines Dienststatus: '+error.message;return}
  activeDuty=data||null;renderDutyStatus();
 }
+
 function renderDutyStatus(){
- const status=document.getElementById('dutyStatus'),start=document.getElementById('startDutyButton'),stop=document.getElementById('stopDutyButton');
+ const status=document.getElementById('dutyStatus');
+ const start=document.getElementById('startDutyButton');
+ const stop=document.getElementById('stopDutyButton');
+
  if(activeDuty){
   status.innerHTML='<span class="online">● Du bist aktuell im Dienst.</span>';
   start.classList.add('hidden');stop.classList.remove('hidden');
@@ -555,118 +576,73 @@ function renderDutyStatus(){
   if(dutyInterval){clearInterval(dutyInterval);dutyInterval=null}
  }
 }
+
 async function startDuty(){
- if(!currentUser||!currentProfile||!isApproved(currentProfile.role)){alert('Du bist nicht berechtigt, Dienst zu starten.');return}
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){alert('Du bist nicht berechtigt, Dienst zu starten.');return}
  if(activeDuty){alert('Du bist bereits im Dienst.');return}
- const {data,error}=await db.from('duty_entries').insert({user_id:currentUser.id}).select('id,started_at,ended_at').single();
+
+ const {data,error}=await db.from('duty_entries')
+ .insert({user_id:currentUser.id}).select('id,started_at,ended_at').single();
+
  if(error){document.getElementById('dutyMessage').textContent='Dienst konnte nicht gestartet werden: '+error.message;return}
- activeDuty=data;document.getElementById('dutyMessage').textContent='Dein Dienst wurde gestartet.';renderDutyStatus();await loadDutyOverview();
+ activeDuty=data;
+ document.getElementById('dutyMessage').textContent='Dein Dienst wurde gestartet.';
+ renderDutyStatus();await loadDutyOverview();
 }
+
 async function stopDuty(){
  if(!activeDuty||!currentUser)return;
- const {data,error}=await db.from('duty_entries').update({ended_at:new Date().toISOString()}).eq('id',activeDuty.id).eq('user_id',currentUser.id).is('ended_at',null).select('id').maybeSingle();
+ const {data,error}=await db.from('duty_entries')
+ .update({ended_at:new Date().toISOString()})
+ .eq('id',activeDuty.id).eq('user_id',currentUser.id)
+ .is('ended_at',null).select('id').maybeSingle();
+
  if(error){document.getElementById('dutyMessage').textContent='Dienst konnte nicht beendet werden: '+error.message;return}
  if(!data){document.getElementById('dutyMessage').textContent='Der Dienst konnte nicht beendet werden. Bitte aktualisiere die Seite.';return}
- activeDuty=null;document.getElementById('dutyMessage').textContent='Dein Dienst wurde beendet.';renderDutyStatus();await loadDutyOverview();
+
+ activeDuty=null;
+ document.getElementById('dutyMessage').textContent='Dein Dienst wurde beendet.';
+ renderDutyStatus();await loadDutyOverview();
 }
+
 async function loadDutyOverview(){
  const list=document.getElementById('dutyOverview');if(!list)return;
  list.textContent='Dienstzeiten werden geladen...';
  const {data,error}=await db.rpc('get_duty_overview');
+
  if(error){list.textContent='Fehler beim Laden der Dienstzeiten: '+error.message;return}
  list.innerHTML='';
  if(!data||!data.length){list.textContent='Noch keine Team-Dienstzeiten vorhanden.';return}
+
  data.forEach(member=>{
   const card=document.createElement('div');card.className='record';
   const name=document.createElement('strong');name.textContent=member.display_name||'Teammitglied';card.appendChild(name);
-  const rank=document.createElement('p');rank.className='small';rank.textContent=member.rank_name||member.role||'Teammitglied';card.appendChild(rank);
+  const rank=document.createElement('p');rank.className='small';
+  rank.textContent=member.rank_name||roleNames[member.role]||member.role||'Teammitglied';card.appendChild(rank);
   const total=document.createElement('p');total.textContent='Gesamte Dienstzeit: '+formatDuration(member.total_seconds);card.appendChild(total);
+
   const status=document.createElement('p');
   if(member.active_since){
    status.innerHTML='<span class="online">● Aktuell im Dienst</span>';
-   const since=document.createElement('p');since.className='small';since.textContent='Dienstbeginn: '+new Date(member.active_since).toLocaleString('de-DE');card.appendChild(since);
+   const since=document.createElement('p');since.className='small';
+   since.textContent='Dienstbeginn: '+new Date(member.active_since).toLocaleString('de-DE');card.appendChild(since);
   }else status.innerHTML='<span class="offline">● Nicht im Dienst</span>';
+
   card.appendChild(status);list.appendChild(card);
  });
 }
 
-// OWNER-TEAMVERWALTUNG
-async function loadTeam(){
- const list=document.getElementById('teamList'),msg=document.getElementById('teamMessage');
- list.innerHTML='';msg.textContent='Team wird geladen...';
- if(!isOwner()){msg.textContent='Nur der Owner kann die Teamverwaltung bearbeiten.';return}
- const {data,error}=await db.rpc('get_owner_team');
- if(error){msg.textContent='Fehler beim Laden: '+error.message;return}
- msg.textContent=data.length+' Teamkonten gefunden.';
- data.forEach(member=>{
-  const card=document.createElement('div');card.className='member';
-  const heading=document.createElement('strong');heading.textContent=member.display_name||'Unbekanntes Mitglied';card.appendChild(heading);
-  const email=document.createElement('p');email.className='small';email.textContent=member.email||'Keine E-Mail hinterlegt';card.appendChild(email);
-  const id=document.createElement('p');id.className='small';id.textContent='Benutzer-ID: '+member.id;card.appendChild(id);
-
-  const roleLabel=document.createElement('label');roleLabel.textContent='Rolle';card.appendChild(roleLabel);
-  const role=document.createElement('select');
-  roleOptions.forEach(item=>{
-   const option=document.createElement('option');
-   option.value=item.value;
-   option.textContent=item.label;
-   role.appendChild(option);
-  });
-  role.value=getRoleOption(member);
-  card.appendChild(role);
-
-  const rankLabel=document.createElement('label');rankLabel.textContent='Teamrang / zusätzliche Bezeichnung';card.appendChild(rankLabel);
-  const rank=document.createElement('input');
-  rank.value=member.rank_name||'';
-  rank.placeholder='z. B. —— — Teammitglied';
-  card.appendChild(rank);
-
-  const save=document.createElement('button');
-  save.textContent='Änderungen speichern';
-  save.onclick=()=>saveMember(member.id,rank.value,role.value);
-  card.appendChild(save);
-  list.appendChild(card);
- });
-}
-
-async function saveMember(id,rank,selectedRole){
- if(!isOwner()){alert('Keine Berechtigung.');return}
-
- let databaseRole=selectedRole;
- let finalRank=rank.trim();
-
- if(roleMappings[selectedRole]){
-  databaseRole=roleMappings[selectedRole].role;
-  if(!finalRank)finalRank=roleMappings[selectedRole].rank;
- }
-
- if(id===currentUser.id&&databaseRole!=='owner'){
-  alert('Du kannst dir selbst nicht den Owner-Rang entziehen.');
-  return;
- }
-
- if(roleMappings[selectedRole]&&(!finalRank||finalRank===selectedRole)){
-  finalRank=roleMappings[selectedRole].rank;
- }
-
- const {error}=await db.from('profiles')
-  .update({rank_name:finalRank,role:databaseRole})
-  .eq('id',id);
-
- if(error){alert('Speichern fehlgeschlagen: '+error.message);return}
- alert('Änderungen gespeichert.');
- await loadTeam();
- if(id===currentUser.id)await openDashboard(currentUser);
-}
-
-// OWNER-MITGLIEDERVERWALTUNG
+// MITGLIEDERVERWALTUNG: ROLLEN, RÄNGE UND FREISCHALTUNG
 async function loadMembers(){
  const list=document.getElementById('membersList');
  const msg=document.getElementById('membersMessage');
  list.innerHTML='';
  msg.textContent='Mitglieder werden geladen...';
 
- if(!isOwner()){msg.textContent='Nur der Owner darf diese Seite öffnen.';return}
+ if(!canManageMembers()){
+  msg.textContent='Keine Berechtigung für die Mitgliederverwaltung.';
+  return;
+ }
 
  const {data,error}=await db.rpc('get_owner_team');
  if(error){msg.textContent='Fehler beim Laden: '+error.message;return}
@@ -682,61 +658,105 @@ async function loadMembers(){
   heading.textContent=member.display_name||'Unbekanntes Mitglied';
   card.appendChild(heading);
 
-  const email=document.createElement('p');
-  email.className='small';
-  email.textContent='E-Mail: '+(member.email||'Keine E-Mail hinterlegt');
-  card.appendChild(email);
+  if(isOwner()){
+   const email=document.createElement('p');
+   email.className='small';
+   email.textContent='E-Mail: '+(member.email||'Keine E-Mail hinterlegt');
+   card.appendChild(email);
+  }
 
   const id=document.createElement('p');
   id.className='small';
   id.textContent='Benutzer-ID: '+member.id;
   card.appendChild(id);
 
-  const roleInfo=document.createElement('p');
-  roleInfo.className='small';
-  roleInfo.textContent='Rolle: '+getRoleLabel(member);
-  card.appendChild(roleInfo);
-
+  // Benutzername
   const nameLabel=document.createElement('label');
-  nameLabel.textContent='Benutzername ändern';
+  nameLabel.textContent='Benutzername';
   card.appendChild(nameLabel);
 
   const nameInput=document.createElement('input');
   nameInput.value=member.display_name||'';
   nameInput.maxLength=40;
-  nameInput.placeholder='Neuer Benutzername';
+  nameInput.placeholder='Benutzername';
   card.appendChild(nameInput);
 
-  const nameButton=document.createElement('button');
-  nameButton.textContent='Benutzernamen speichern';
-  nameButton.onclick=()=>changeUsername(member.id,nameInput.value);
-  card.appendChild(nameButton);
+  // Rolle
+  const roleLabel=document.createElement('label');
+  roleLabel.textContent='Teamrolle';
+  card.appendChild(roleLabel);
 
-  // NEU: Ausstehende Konten direkt freischalten
+  const roleSelect=document.createElement('select');
+  const roleOptions=[
+   ['pending','Ausstehend'],
+   ['serverteam','———Serverteam———'],
+   ['highteam','———Highteam———'],
+   ['leitungsebene','———Leitungsebene———'],
+   ['staff','Staff'],
+   ['moderator','Moderator'],
+   ['management','Management'],
+   ['owner','Owner']
+  ];
+
+  roleOptions.forEach(([value,label])=>{
+   const option=document.createElement('option');
+   option.value=value;
+   option.textContent=label;
+   roleSelect.appendChild(option);
+  });
+
+  roleSelect.value=roleNames[member.role]?member.role:'pending';
+  card.appendChild(roleSelect);
+
+  // Teamrang
+  const rankLabel=document.createElement('label');
+  rankLabel.textContent='Teamrang / eigene Rangbezeichnung';
+  card.appendChild(rankLabel);
+
+  const rankInput=document.createElement('input');
+  rankInput.value=member.rank_name||'';
+  rankInput.placeholder='z. B. Administrator, Supporter, Projektleitung';
+  card.appendChild(rankInput);
+
+  const saveButton=document.createElement('button');
+  saveButton.textContent='Änderungen speichern';
+  saveButton.onclick=()=>saveMemberSettings(
+   member.id,
+   nameInput.value,
+   roleSelect.value,
+   rankInput.value
+  );
+  card.appendChild(saveButton);
+
+  // Status
+  const state=document.createElement('p');
   if(member.role==='pending'){
-   const pendingState=document.createElement('p');
-   pendingState.innerHTML='<span class="tag warning-tag">AUSSTEHEND</span>';
-   card.appendChild(pendingState);
-
-   const approveButton=document.createElement('button');
-   approveButton.className='success';
-   approveButton.textContent='Konto freischalten';
-   approveButton.onclick=()=>approveMember(member.id,member.display_name||'dieses Mitglied');
-   card.appendChild(approveButton);
+   state.innerHTML='<span class="tag warning-tag">AUSSTEHEND</span>';
   }else if(member.is_active===false){
-   const state=document.createElement('p');
    state.innerHTML='<span class="tag ban-tag">GESPERRT</span>';
    if(member.ban_until)state.textContent+=' Gesperrt bis: '+new Date(member.ban_until).toLocaleString('de-DE');
    else state.textContent+=' Dauerhafte Sperre';
    if(member.ban_reason)state.textContent+=' | Grund: '+member.ban_reason;
-   card.appendChild(state);
   }else{
-   const state=document.createElement('p');
    state.innerHTML='<span class="tag">AKTIV</span>';
-   card.appendChild(state);
+  }
+  card.appendChild(state);
+
+  // Konto freischalten
+  if(member.role==='pending'){
+   const approveButton=document.createElement('button');
+   approveButton.className='success';
+   approveButton.textContent='Konto freischalten';
+   approveButton.onclick=()=>approveMember(
+    member.id,
+    roleSelect.value==='pending'?'serverteam':roleSelect.value,
+    rankInput.value
+   );
+   card.appendChild(approveButton);
   }
 
-  if(member.id!==currentUser.id&&member.role!=='owner'){
+  // Sperren und Löschen nur für Owner
+  if(isOwner()&&member.id!==currentUser.id&&member.role!=='owner'){
    const separator=document.createElement('hr');
    card.appendChild(separator);
 
@@ -784,15 +804,12 @@ async function loadMembers(){
    deleteButton.textContent='Konto dauerhaft löschen';
    deleteButton.onclick=()=>deleteMember(member.id,member.display_name||'dieses Mitglied');
    card.appendChild(deleteButton);
-  }else if(member.id===currentUser.id){
+  }
+
+  if(member.id===currentUser.id&&member.role==='owner'){
    const note=document.createElement('p');
    note.className='small';
    note.textContent='Dein eigenes Owner-Konto kann hier nicht gesperrt oder gelöscht werden.';
-   card.appendChild(note);
-  }else{
-   const note=document.createElement('p');
-   note.className='small';
-   note.textContent='Andere Owner-Konten können hier nicht gesperrt oder gelöscht werden.';
    card.appendChild(note);
   }
 
@@ -800,46 +817,96 @@ async function loadMembers(){
  });
 }
 
-// NEU: KONTO FREISCHALTEN
-async function approveMember(id,name){
- if(!isOwner()){alert('Nur der Owner darf Konten freischalten.');return}
- if(!confirm('Möchtest du '+name+' freischalten und dem Serverteam zuweisen?'))return;
+async function saveMemberSettings(id,newName,newRole,newRank){
+ if(!canManageMembers()){alert('Keine Berechtigung.');return}
 
- const {error}=await db.from('profiles').update({
-  role:'staff',
-  rank_name:'———Serverteam———',
-  is_active:true,
-  ban_until:null,
-  ban_reason:null
- }).eq('id',id).eq('role','pending');
-
- if(error){
-  alert('Freischaltung fehlgeschlagen: '+error.message);
-  return;
- }
-
- alert(name+' wurde freigeschaltet und dem Serverteam zugewiesen.');
- await loadMembers();
- await loadTeam();
-}
-
-async function changeUsername(id,newName){
- if(!isOwner()){alert('Nur der Owner darf Benutzernamen ändern.');return}
  const username=newName.trim();
+ const rank=newRank.trim();
+
  if(username.length<3||username.length>40){
   alert('Der Benutzername muss zwischen 3 und 40 Zeichen lang sein.');
   return;
  }
- const {error}=await db.from('profiles').update({display_name:username}).eq('id',id);
- if(error){alert('Benutzername konnte nicht geändert werden: '+error.message);return}
- alert('Benutzername wurde geändert.');
+
+ if(!Object.keys(roleNames).includes(newRole)){
+  alert('Diese Rolle ist ungültig.');
+  return;
+ }
+
+ if(id===currentUser.id&&isOwner()&&newRole!=='owner'){
+  alert('Du kannst dir selbst nicht den Owner-Rang entziehen.');
+  return;
+ }
+
+ if(newRole==='owner'&&!isOwner()){
+  alert('Nur der Owner darf Owner-Rechte vergeben.');
+  return;
+ }
+
+ const updates={
+  display_name:username,
+  role:newRole,
+  rank_name:rank
+ };
+
+ if(approvedRoles.includes(newRole)){
+  updates.is_active=true;
+  updates.ban_until=null;
+  updates.ban_reason=null;
+ }
+
+ const {error}=await db.from('profiles').update(updates).eq('id',id);
+
+ if(error){
+  alert('Änderungen konnten nicht gespeichert werden: '+error.message);
+  return;
+ }
+
+ alert('Benutzername, Teamrolle und Teamrang wurden gespeichert.');
+
  if(id===currentUser.id){
   currentProfile.display_name=username;
-  document.getElementById('welcome').textContent='Angemeldet als '+username;
+  currentProfile.role=newRole;
+  currentProfile.rank_name=rank;
+  await openDashboard(currentUser);
  }
+
  await loadMembers();
 }
 
+async function approveMember(id,role,rank){
+ if(!canManageMembers()){alert('Keine Berechtigung zum Freischalten.');return}
+
+ if(!approvedRoles.includes(role)){
+  alert('Bitte wähle zuerst eine gültige Teamrolle aus.');
+  return;
+ }
+
+ if(role==='owner'&&!isOwner()){
+  alert('Nur der Owner darf Owner-Rechte vergeben.');
+  return;
+ }
+
+ if(!confirm('Möchtest du dieses Konto wirklich freischalten?'))return;
+
+ const {error}=await db.from('profiles').update({
+  role:role,
+  rank_name:rank.trim(),
+  is_active:true,
+  ban_until:null,
+  ban_reason:null
+ }).eq('id',id);
+
+ if(error){
+  alert('Konto konnte nicht freigeschaltet werden: '+error.message);
+  return;
+ }
+
+ alert('Das Konto wurde freigeschaltet.');
+ await loadMembers();
+}
+
+// MITGLIEDER SPERREN
 async function suspendMember(id,minutes,reason){
  if(!isOwner()){alert('Nur der Owner darf Mitglieder sperren.');return}
  if(id===currentUser.id){alert('Du kannst dich nicht selbst sperren.');return}
@@ -870,9 +937,7 @@ async function unsuspendMember(id){
  if(!confirm('Möchtest du dieses Mitglied wieder freischalten?'))return;
 
  const {error}=await db.from('profiles').update({
-  is_active:true,
-  ban_until:null,
-  ban_reason:null
+  is_active:true,ban_until:null,ban_reason:null
  }).eq('id',id);
 
  if(error){alert('Freigabe fehlgeschlagen: '+error.message);return}
@@ -884,14 +949,15 @@ async function deleteMember(id,name){
  if(!isOwner()){alert('Nur der Owner darf Konten löschen.');return}
  if(id===currentUser.id){alert('Du kannst dein eigenes Konto nicht löschen.');return}
 
- const confirmation=prompt('Du bist dabei, das Konto von '+name+' dauerhaft zu löschen.\nTippe LÖSCHEN zur Bestätigung:');
+ const confirmation=prompt(
+  'Du bist dabei, das Konto von '+name+' dauerhaft zu löschen.\nTippe LÖSCHEN zur Bestätigung:'
+ );
  if(confirmation!=='LÖSCHEN')return;
 
  const {data,error}=await db.functions.invoke('owner-delete-user',{body:{user_id:id}});
  if(error){alert('Löschen fehlgeschlagen: '+error.message);return}
  alert(data?.message||'Benutzerkonto wurde gelöscht.');
  await loadMembers();
- await loadTeam();
 }
 
 async function logout(){
@@ -905,8 +971,8 @@ async function logout(){
 function showPage(id){
  document.querySelectorAll('.page').forEach(page=>page.classList.add('hidden'));
 
- if((id==='team'||id==='members')&&!isOwner()){
-  alert('Nur der Owner darf diesen Bereich öffnen.');
+ if(id==='members'&&!canManageMembers()){
+  alert('Du hast keine Berechtigung für die Mitgliederverwaltung.');
   return;
  }
 
@@ -914,7 +980,6 @@ function showPage(id){
 
  if(id==='sanctions')loadSanctions();
  if(id==='notes')loadNotes();
- if(id==='team')loadTeam();
  if(id==='members')loadMembers();
  if(id==='duty'){loadMyDuty();loadDutyOverview()}
 }
