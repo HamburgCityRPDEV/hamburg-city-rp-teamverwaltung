@@ -32,6 +32,7 @@ button:hover{background:#1595ff}
 .secondary{background:#263b59}
 .discord{background:#5865F2}
 .danger{background:#a83242}
+.danger:hover{background:#d94355}
 .hidden{display:none!important}
 nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 .status{color:#9eb8d8;font-size:14px}
@@ -682,8 +683,54 @@ async function loadWarnings(){
    (record.created_by===currentUser.id?'Dir':'Teammitglied');
   card.appendChild(creator);
 
+  // NEU: LÖSCHBUTTON NUR FÜR OWNER UND MANAGEMENT
+  if(['owner','management'].includes(currentProfile.role)){
+   const deleteButton=document.createElement('button');
+   deleteButton.textContent='Verwarnung löschen';
+   deleteButton.className='danger';
+   deleteButton.onclick=()=>deleteWarning(record.id);
+   card.appendChild(deleteButton);
+  }
+
   list.appendChild(card);
  });
+}
+
+// NEU: VERWARNUNG LÖSCHEN
+async function deleteWarning(id){
+ if(!currentProfile||!['owner','management'].includes(currentProfile.role)){
+  alert('Du hast keine Berechtigung zum Löschen.');
+  return;
+ }
+
+ const confirmed=confirm(
+  'Möchtest du diese Verwarnung wirklich dauerhaft löschen?'
+ );
+
+ if(!confirmed){
+  return;
+ }
+
+ const {data,error}=await db.from('staff_records')
+  .delete()
+  .eq('id',id)
+  .eq('module','warning')
+  .select('id')
+  .maybeSingle();
+
+ if(error){
+  alert('Fehler beim Löschen: '+error.message);
+  return;
+ }
+
+ if(!data){
+  alert('Die Verwarnung wurde nicht gelöscht. Bitte prüfe die Supabase-Datenbankberechtigungen.');
+  return;
+ }
+
+ alert('Die Verwarnung wurde erfolgreich gelöscht.');
+
+ await loadWarnings();
 }
 
 // ABMELDEN
