@@ -3,26 +3,32 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hamburg City RP | Teamverwaltung</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080d18;color:#eef4ff;font-family:Arial,sans-serif}
+body{margin:0;background:#080d18;color:#edf4ff;font-family:Arial,sans-serif}
 header{background:#101b30;padding:22px;border-bottom:2px solid #168bff}
 h1{margin:0;color:#45a5ff;font-size:25px}
-header p{margin:6px 0 0;color:#9eb3d1}
-main{max-width:950px;margin:35px auto;padding:15px}
+header p{color:#9eb3d1;margin-bottom:0}
+main{max-width:1100px;margin:30px auto;padding:15px}
 .card{background:#111d32;border:1px solid #263d5d;border-radius:13px;padding:22px;margin-bottom:18px}
 h2{color:#55aaff;margin-top:0}
-input,textarea,select{width:100%;padding:13px;margin:8px 0 15px;border-radius:7px;border:1px solid #385477;background:#091426;color:white}
+input,select{width:100%;padding:13px;margin:8px 0 15px;border-radius:7px;border:1px solid #385477;background:#091426;color:white}
 button{background:#087de0;color:white;border:0;border-radius:7px;padding:12px 18px;margin:5px 4px 5px 0;font-weight:bold;cursor:pointer}
 button:hover{background:#1595ff}
 .secondary{background:#263b59}
-.hidden{display:none}
+.danger{background:#a83245}
+.hidden{display:none!important}
 nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
-.status{color:#8eb8e9;font-size:14px}
+.status{color:#9eb8d8;font-size:14px}
 #message{padding:10px;color:#75bcff}
+.member{background:#0b172a;border:1px solid #29415f;border-radius:9px;padding:15px;margin:12px 0}
+.member strong{color:#68b5ff}
+.small{font-size:13px;color:#9eb3d1}
+.badge{display:inline-block;background:#153d66;padding:5px 9px;border-radius:6px;margin:5px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 </style>
 </head>
 <body>
@@ -34,13 +40,13 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 <main>
 <section id="setup" class="card">
 <h2>System verbinden</h2>
-<p>Trage hier deine Supabase-Projektdaten ein.</p>
+<p>Deine Supabase-Projektdaten eingeben.</p>
 <label>Project URL</label>
 <input id="projectUrl" placeholder="https://deinprojekt.supabase.co">
 <label>Public anon / publishable key</label>
-<input id="publicKey" placeholder="Dein öffentlicher Schlüssel">
+<input id="publicKey" placeholder="Öffentlicher Schlüssel">
 <button onclick="connect()">Verbinden</button>
-<p class="status">Verwende niemals den geheimen service_role-Schlüssel hier.</p>
+<p class="status">Niemals den geheimen service_role-Schlüssel verwenden.</p>
 </section>
 
 <section id="auth" class="card hidden">
@@ -57,7 +63,7 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 <section id="dashboard" class="hidden">
 <div class="card">
 <h2>Willkommen bei Hamburg City RP</h2>
-<p id="welcome">Teamverwaltung</p>
+<p id="welcome"></p>
 <p id="role" class="status"></p>
 <button class="secondary" onclick="logout()">Abmelden</button>
 </div>
@@ -69,44 +75,51 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 <button onclick="showPage('applications')">Bewerbungen</button>
 <button onclick="showPage('complaints')">Beschwerden</button>
 <button onclick="showPage('duty')">Dienstzeiten</button>
-<button onclick="showPage('notes')">Interne Notizen</button>
+<button onclick="showPage('notes')">Notizen</button>
 </nav>
 
 <div id="home" class="card page">
 <h2>Dashboard</h2>
-<p>Willkommen im internen Verwaltungsbereich.</p>
-<p>Hier werden künftig die Verwaltungsbereiche deines RP-Servers zusammengeführt.</p>
+<p>Willkommen im internen Verwaltungsbereich von Hamburg City RP.</p>
+<div class="grid">
+<div class="member"><strong>Teamverwaltung</strong><p class="small">Mitglieder und Ränge verwalten</p></div>
+<div class="member"><strong>Verwarnungen</strong><p class="small">Team-Einträge dokumentieren</p></div>
+<div class="member"><strong>Bewerbungen</strong><p class="small">Bewerbungen verwalten</p></div>
+<div class="member"><strong>Dienstzeiten</strong><p class="small">Aktivität organisieren</p></div>
+</div>
 </div>
 
 <div id="team" class="card page hidden">
 <h2>Teamverwaltung</h2>
-<p>Hier verwaltest du künftig deine Teammitglieder und deren Rollen.</p>
-<p class="status">Die Rollenverwaltung wird im nächsten Schritt eingerichtet.</p>
+<p class="status">Hier siehst du die registrierten Teamkonten.</p>
+<button onclick="loadTeam()">Team aktualisieren</button>
+<div id="teamMessage" class="status"></div>
+<div id="teamList"></div>
 </div>
 
 <div id="warnings" class="card page hidden">
 <h2>Verwarnungssystem</h2>
-<p>Hier werden künftig Verwarnungen dokumentiert.</p>
+<p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
 
 <div id="applications" class="card page hidden">
 <h2>Bewerbungen</h2>
-<p>Verwaltung eingehender Team-Bewerbungen.</p>
+<p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
 
 <div id="complaints" class="card page hidden">
 <h2>Beschwerden</h2>
-<p>Verwaltung interner und externer Beschwerden.</p>
+<p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
 
 <div id="duty" class="card page hidden">
 <h2>Dienstzeiten</h2>
-<p>Übersicht über Dienstzeiten und Aktivität.</p>
+<p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
 
 <div id="notes" class="card page hidden">
 <h2>Interne Notizen</h2>
-<p>Interner Bereich für wichtige Teamhinweise.</p>
+<p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
 </section>
 </main>
@@ -114,6 +127,7 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 <script>
 let db=null;
 let currentUser=null;
+let currentProfile=null;
 
 function connect(){
  const url=document.getElementById('projectUrl').value.trim();
@@ -126,21 +140,15 @@ function connect(){
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('auth').classList.remove('hidden');
   checkSession();
- }catch(e){alert('Verbindung konnte nicht hergestellt werden.');}
-}
-
-async function checkSession(){
- if(!db)return;
- const {data}=await db.auth.getSession();
- if(data.session)await openDashboard(data.session.user);
+ }catch(e){alert('Verbindung fehlgeschlagen.');}
 }
 
 async function register(){
  const email=document.getElementById('email').value.trim();
  const password=document.getElementById('password').value;
- if(password.length<8){alert('Das Passwort muss mindestens 8 Zeichen haben.');return;}
+ if(!email||password.length<8){alert('Bitte E-Mail und Passwort mit mindestens 8 Zeichen eingeben.');return;}
  const {error}=await db.auth.signUp({email,password});
- document.getElementById('message').textContent=error?error.message:'Registrierung abgeschickt. Prüfe gegebenenfalls deine E-Mails zur Bestätigung.';
+ document.getElementById('message').textContent=error?error.message:'Registrierung abgeschickt. Du kannst dich jetzt anmelden.';
 }
 
 async function login(){
@@ -151,28 +159,178 @@ async function login(){
  await openDashboard(data.user);
 }
 
+async function checkSession(){
+ if(!db)return;
+ const {data}=await db.auth.getSession();
+ if(data.session)await openDashboard(data.session.user);
+}
+
 async function openDashboard(user){
  currentUser=user;
  document.getElementById('auth').classList.add('hidden');
  document.getElementById('setup').classList.add('hidden');
  document.getElementById('dashboard').classList.remove('hidden');
  document.getElementById('welcome').textContent='Angemeldet als '+user.email;
- const {data,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+
+ const {data,error}=await db.from('profiles')
+ .select('id,email,display_name,role,rank_name,is_active')
+ .eq('id',user.id).single();
+
  if(error){
-  document.getElementById('role').textContent='Profil wird geladen. Bitte später erneut anmelden.';
- }else{
-  document.getElementById('role').textContent='Deine Rolle: '+(data.role||'Noch nicht freigeschaltet');
+  document.getElementById('role').textContent='Profil konnte nicht geladen werden: '+error.message;
+  return;
+ }
+ currentProfile=data;
+ document.getElementById('role').textContent='Deine Rolle: '+(data.role||'Nicht freigeschaltet');
+
+ if(data.is_active===false){
+  alert('Dein Konto ist deaktiviert.');
+  await logout();
+  return;
+ }
+}
+
+async function loadTeam(){
+ const list=document.getElementById('teamList');
+ const msg=document.getElementById('teamMessage');
+ list.innerHTML='';
+ msg.textContent='Team wird geladen...';
+
+ if(!currentProfile||currentProfile.role!=='owner'){
+  msg.textContent='Nur die Serverleitung kann die Teamverwaltung bearbeiten.';
+  return;
+ }
+
+ const {data,error}=await db.from('profiles')
+ .select('id,email,display_name,role,rank_name,is_active')
+ .order('created_at',{ascending:true});
+
+ if(error){
+  msg.textContent='Fehler beim Laden: '+error.message;
+  return;
+ }
+
+ msg.textContent=data.length+' Teamkonten gefunden.';
+
+ if(data.length===0){
+  list.textContent='Noch keine Teamkonten vorhanden.';
+  return;
+ }
+
+ data.forEach(member=>{
+  const card=document.createElement('div');
+  card.className='member';
+
+  const heading=document.createElement('strong');
+  heading.textContent=member.display_name||member.email||'Unbekanntes Mitglied';
+  card.appendChild(heading);
+
+  const email=document.createElement('p');
+  email.className='small';
+  email.textContent=member.email||'Keine E-Mail hinterlegt';
+  card.appendChild(email);
+
+  const roleLabel=document.createElement('label');
+  roleLabel.textContent='Rolle';
+  card.appendChild(roleLabel);
+
+  const role=document.createElement('select');
+  ['pending','staff','moderator','management','owner'].forEach(value=>{
+   const option=document.createElement('option');
+   option.value=value;
+   option.textContent=value;
+   role.appendChild(option);
+  });
+  role.value=member.role||'pending';
+  card.appendChild(role);
+
+  const nameLabel=document.createElement('label');
+  nameLabel.textContent='Anzeigename';
+  card.appendChild(nameLabel);
+
+  const name=document.createElement('input');
+  name.value=member.display_name||'';
+  name.placeholder='Name des Mitglieds';
+  card.appendChild(name);
+
+  const rankLabel=document.createElement('label');
+  rankLabel.textContent='Teamrang';
+  card.appendChild(rankLabel);
+
+  const rank=document.createElement('input');
+  rank.value=member.rank_name||'';
+  rank.placeholder='z. B. Moderator';
+  card.appendChild(rank);
+
+  const activeLabel=document.createElement('label');
+  activeLabel.textContent='Mitglied aktiv';
+  card.appendChild(activeLabel);
+
+  const active=document.createElement('select');
+  [['true','Ja'],['false','Nein']].forEach(pair=>{
+   const option=document.createElement('option');
+   option.value=pair[0];
+   option.textContent=pair[1];
+   active.appendChild(option);
+  });
+  active.value=member.is_active===false?'false':'true';
+  card.appendChild(active);
+
+  const save=document.createElement('button');
+  save.textContent='Änderungen speichern';
+  save.onclick=()=>saveMember(member.id,name.value,rank.value,role.value,active.value);
+  card.appendChild(save);
+
+  if(member.id===currentUser.id){
+   const note=document.createElement('p');
+   note.className='small';
+   note.textContent='Dein eigenes Konto.';
+   card.appendChild(note);
+  }
+
+  list.appendChild(card);
+ });
+}
+
+async function saveMember(id,name,rank,role,active){
+ if(!currentProfile||currentProfile.role!=='owner'){
+  alert('Keine Berechtigung.');
+  return;
+ }
+
+ const {error}=await db.from('profiles')
+ .update({
+  display_name:name.trim(),
+  rank_name:rank.trim(),
+  role:role,
+  is_active:active==='true'
+ })
+ .eq('id',id);
+
+ if(error){
+  alert('Speichern fehlgeschlagen: '+error.message);
+  return;
+ }
+
+ alert('Änderungen gespeichert.');
+ await loadTeam();
+
+ if(id===currentUser.id){
+  await openDashboard(currentUser);
  }
 }
 
 async function logout(){
- await db.auth.signOut();
+ if(db)await db.auth.signOut();
+ currentUser=null;
+ currentProfile=null;
  location.reload();
 }
 
 function showPage(id){
  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
  document.getElementById(id).classList.remove('hidden');
+ if(id==='team')loadTeam();
 }
 
 window.addEventListener('load',()=>{
