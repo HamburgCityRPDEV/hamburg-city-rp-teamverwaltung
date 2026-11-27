@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -243,10 +244,9 @@ function isOwner(){
  return currentProfile&&currentProfile.role==='owner';
 }
 
+// Die Teamverwaltung ist Owner-only, passend zur Supabase-RPC.
 function canManageMembers(){
- return currentProfile&&[
-  'owner','leitungsebene'
- ].includes(currentProfile.role);
+ return isOwner();
 }
 
 function connect(){
@@ -631,7 +631,7 @@ async function loadDutyOverview(){
  });
 }
 
-// MITGLIEDERVERWALTUNG: ROLLEN, RÄNGE UND FREISCHALTUNG
+// MITGLIEDERVERWALTUNG
 async function loadMembers(){
  const list=document.getElementById('membersList');
  const msg=document.getElementById('membersMessage');
@@ -639,17 +639,18 @@ async function loadMembers(){
  msg.textContent='Mitglieder werden geladen...';
 
  if(!canManageMembers()){
-  msg.textContent='Keine Berechtigung für die Mitgliederverwaltung.';
+  msg.textContent='Nur der aktive Owner darf die Mitgliederverwaltung verwenden.';
   return;
  }
 
  const {data,error}=await db.rpc('get_owner_team');
  if(error){msg.textContent='Fehler beim Laden: '+error.message;return}
 
- msg.textContent=data.length+' Mitglieder gefunden.';
- if(!data.length){list.textContent='Keine Mitglieder vorhanden.';return}
+ const members=data||[];
+ msg.textContent=members.length+' Mitglieder gefunden.';
+ if(!members.length){list.textContent='Keine Mitglieder vorhanden.';return}
 
- data.forEach(member=>{
+ members.forEach(member=>{
   const card=document.createElement('div');
   card.className='member';
 
@@ -657,12 +658,10 @@ async function loadMembers(){
   heading.textContent=member.display_name||'Unbekanntes Mitglied';
   card.appendChild(heading);
 
-  if(isOwner()){
-   const email=document.createElement('p');
-   email.className='small';
-   email.textContent='E-Mail: '+(member.email||'Keine E-Mail hinterlegt');
-   card.appendChild(email);
-  }
+  const email=document.createElement('p');
+  email.className='small';
+  email.textContent='E-Mail: '+(member.email||'Keine E-Mail hinterlegt');
+  card.appendChild(email);
 
   const id=document.createElement('p');
   id.className='small';
@@ -716,18 +715,12 @@ async function loadMembers(){
 
   const saveButton=document.createElement('button');
   saveButton.textContent='Änderungen speichern';
-
-  // TEST: Prüfen, ob der Button ausgelöst wird
-  saveButton.onclick=()=>{
-   alert('Der Speichern-Button funktioniert!');
-   saveMemberSettings(
-    member.id,
-    nameInput.value,
-    roleSelect.value,
-    rankInput.value
-   );
-  };
-
+  saveButton.onclick=()=>saveMemberSettings(
+   member.id,
+   nameInput.value,
+   roleSelect.value,
+   rankInput.value
+  );
   card.appendChild(saveButton);
 
   const state=document.createElement('p');
@@ -749,7 +742,8 @@ async function loadMembers(){
    approveButton.textContent='Konto freischalten';
    approveButton.onclick=()=>approveMember(
     member.id,
-    roleSelect.value==='pending'?'serverteam':roleSelect.value,
+    nameInput.value,
+    roleSelect.value==='pending'?'staff':roleSelect.value,
     rankInput.value
    );
    card.appendChild(approveButton);
@@ -816,8 +810,9 @@ async function loadMembers(){
  });
 }
 
+// SPEICHERN VON MITGLIEDERN ÜBER DIE SUPABASE-RPC
 async function saveMemberSettings(id,newName,newRole,newRank){
- if(!canManageMembers()){alert('Keine Berechtigung.');return}
+ if(!isOwner()){alert('Nur der Owner darf Mitglieder bearbeiten.');return}
 
  const username=newName.trim();
  const rank=newRank.trim();
@@ -832,7 +827,7 @@ async function saveMemberSettings(id,newName,newRole,newRank){
   return;
  }
 
- if(id===currentUser.id&&isOwner()&&newRole!=='owner'){
+ if(id===currentUser.id&&newRole!=='owner'){
   alert('Du kannst dir selbst nicht den Owner-Rang entziehen.');
   return;
  }
@@ -842,39 +837,38 @@ async function saveMemberSettings(id,newName,newRole,newRank){
   return;
  }
 
- const updates={
-  display_name:username,
-  role:newRole,
-  rank_name:rank
- };
-
- if(approvedRoles.includes(newRole)){
-  updates.is_active=true;
-  updates.ban_until=null;
-  updates.ban_reason=null;
- }
-
- const {error}=await db.from('profiles').update(updates).eq('id',id);
+ const {data,error}=await db.rpc('owner_update_team_member',{
+  p_user_id:id,
+  p_display_name:username,
+  p_role:newRole,
+  p_rank_name:rank
+ });
 
  if(error){
   alert('Änderungen konnten nicht gespeichert werden: '+error.message);
   return;
  }
 
+ if(data!==true){
+  alert('Es wurde kein Mitglied geändert. Bitte aktualisiere die Seite.');
+  return;
+ }
+
  alert('Benutzername, Teamrolle und Teamrang wurden gespeichert.');
 
  if(id===currentUser.id){
-  currentProfile.display_name=username;
-  currentProfile.role=newRole;
-  currentProfile.rank_name=rank;
   await openDashboard(currentUser);
  }
 
  await loadMembers();
 }
 
-async function approveMember(id,role,rank){
- if(!canManageMembers()){alert('Keine Berechtigung zum Freischalten.');return}
+// KONTO FREISCHALTEN ÜBER DIE SUPABASE-RPC
+async function approveMember(id,name,role,rank){
+ if(!isOwner()){
+  alert('Nur der Owner darf Konten freischalten.');
+  return;
+ }
 
  if(!approvedRoles.includes(role)){
   alert('Bitte wähle zuerst eine gültige Teamrolle aus.');
@@ -886,22 +880,31 @@ async function approveMember(id,role,rank){
   return;
  }
 
- if(!confirm('Möchtest du dieses Konto wirklich freischalten?'))return;
+ if(!name||name.trim().length<3){
+  alert('Der Benutzername muss mindestens 3 Zeichen lang sein.');
+  return;
+ }
 
- const {error}=await db.from('profiles').update({
-  role:role,
-  rank_name:rank.trim(),
-  is_active:true,
-  ban_until:null,
-  ban_reason:null
- }).eq('id',id);
+ if(!confirm('Möchtest du dieses Konto wirklich freischalten und die Rolle '+(roleNames[role]||role)+' vergeben?'))return;
+
+ const {data,error}=await db.rpc('owner_update_team_member',{
+  p_user_id:id,
+  p_display_name:name.trim(),
+  p_role:role,
+  p_rank_name:(rank||'').trim()
+ });
 
  if(error){
   alert('Konto konnte nicht freigeschaltet werden: '+error.message);
   return;
  }
 
- alert('Das Konto wurde freigeschaltet.');
+ if(data!==true){
+  alert('Die Freischaltung wurde nicht durchgeführt. Bitte lade die Mitgliederliste neu.');
+  return;
+ }
+
+ alert('Das Konto wurde erfolgreich freigeschaltet.');
  await loadMembers();
 }
 
@@ -971,7 +974,7 @@ function showPage(id){
  document.querySelectorAll('.page').forEach(page=>page.classList.add('hidden'));
 
  if(id==='members'&&!canManageMembers()){
-  alert('Du hast keine Berechtigung für die Mitgliederverwaltung.');
+  alert('Nur der Owner darf die Mitgliederverwaltung verwenden.');
   return;
  }
 
