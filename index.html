@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hamburg City RP | Teamverwaltung</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080d18;color:#edf4ff;font-family:Arial,sans-serif}
@@ -15,21 +16,37 @@ header p{color:#9eb3d1;margin-bottom:0}
 main{max-width:1100px;margin:30px auto;padding:15px}
 .card{background:#111d32;border:1px solid #263d5d;border-radius:13px;padding:22px;margin-bottom:18px}
 h2{color:#55aaff;margin-top:0}
-input,select{width:100%;padding:13px;margin:8px 0 15px;border-radius:7px;border:1px solid #385477;background:#091426;color:white}
-button{background:#087de0;color:white;border:0;border-radius:7px;padding:12px 18px;margin:5px 4px 5px 0;font-weight:bold;cursor:pointer}
+h3{color:#8bc5ff}
+input,select,textarea{
+ width:100%;padding:13px;margin:8px 0 15px;
+ border-radius:7px;border:1px solid #385477;
+ background:#091426;color:white;font-family:Arial,sans-serif
+}
+textarea{min-height:100px;resize:vertical}
+button{
+ background:#087de0;color:white;border:0;border-radius:7px;
+ padding:12px 18px;margin:5px 4px 5px 0;
+ font-weight:bold;cursor:pointer
+}
 button:hover{background:#1595ff}
 .secondary{background:#263b59}
 .discord{background:#5865F2}
+.danger{background:#a83242}
 .hidden{display:none!important}
 nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 .status{color:#9eb8d8;font-size:14px}
 #message{padding:10px;color:#75bcff}
-.member{background:#0b172a;border:1px solid #29415f;border-radius:9px;padding:15px;margin:12px 0}
-.member strong{color:#68b5ff}
+.member,.record{
+ background:#0b172a;border:1px solid #29415f;
+ border-radius:9px;padding:15px;margin:12px 0
+}
+.member strong,.record strong{color:#68b5ff}
 .small{font-size:13px;color:#9eb3d1}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -39,17 +56,22 @@ nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 
 <main>
 
+<!-- SYSTEM VERBINDEN -->
 <section id="setup" class="card">
 <h2>System verbinden</h2>
 <p>Deine Supabase-Projektdaten eingeben.</p>
+
 <label>Project URL</label>
 <input id="projectUrl" placeholder="https://deinprojekt.supabase.co">
+
 <label>Public anon / publishable key</label>
 <input id="publicKey" placeholder="Öffentlicher Schlüssel">
+
 <button onclick="connect()">Verbinden</button>
 <p class="status">Niemals den geheimen service_role-Schlüssel verwenden.</p>
 </section>
 
+<!-- LOGIN -->
 <section id="auth" class="card hidden">
 <h2>Team-Login</h2>
 
@@ -71,6 +93,7 @@ Mit Discord anmelden
 <div id="message"></div>
 </section>
 
+<!-- DASHBOARD -->
 <section id="dashboard" class="hidden">
 
 <div class="card">
@@ -82,9 +105,7 @@ Mit Discord anmelden
 Discord mit meinem Konto verbinden
 </button>
 
-<p id="discordMessage" class="status">
-Dein Discord-Konto wird geprüft.
-</p>
+<p id="discordMessage" class="status"></p>
 
 <button class="secondary" onclick="logout()">Abmelden</button>
 </div>
@@ -92,10 +113,11 @@ Dein Discord-Konto wird geprüft.
 <div id="pendingNotice" class="card hidden">
 <h2>Konto noch nicht freigeschaltet</h2>
 <p>Dein Konto wurde erstellt, muss aber erst von der Serverleitung freigeschaltet werden.</p>
-<p>Du kannst dich später erneut anmelden.</p>
+<p>Bitte melde dich später erneut an.</p>
 </div>
 
 <div id="mainContent">
+
 <nav>
 <button onclick="showPage('home')">Übersicht</button>
 <button onclick="showPage('team')">Teamverwaltung</button>
@@ -106,30 +128,74 @@ Dein Discord-Konto wird geprüft.
 <button onclick="showPage('notes')">Notizen</button>
 </nav>
 
+<!-- ÜBERSICHT -->
 <div id="home" class="card page">
 <h2>Dashboard</h2>
 <p>Willkommen im internen Verwaltungsbereich von Hamburg City RP.</p>
+
 <div class="grid">
-<div class="member"><strong>Teamverwaltung</strong><p class="small">Mitglieder und Ränge verwalten</p></div>
-<div class="member"><strong>Verwarnungen</strong><p class="small">Team-Einträge dokumentieren</p></div>
-<div class="member"><strong>Bewerbungen</strong><p class="small">Bewerbungen verwalten</p></div>
-<div class="member"><strong>Dienstzeiten</strong><p class="small">Aktivität organisieren</p></div>
+<div class="member">
+<strong>Teamverwaltung</strong>
+<p class="small">Mitglieder und Ränge verwalten</p>
+</div>
+
+<div class="member">
+<strong>Verwarnungen</strong>
+<p class="small">Verwarnungen dokumentieren und einsehen</p>
+</div>
+
+<div class="member">
+<strong>Bewerbungen</strong>
+<p class="small">Bewerbungen verwalten</p>
+</div>
+
+<div class="member">
+<strong>Dienstzeiten</strong>
+<p class="small">Aktivität organisieren</p>
+</div>
 </div>
 </div>
 
+<!-- TEAMVERWALTUNG -->
 <div id="team" class="card page hidden">
 <h2>Teamverwaltung</h2>
 <p class="status">Hier siehst du die registrierten Teamkonten.</p>
+
 <button onclick="loadTeam()">Team aktualisieren</button>
+
 <div id="teamMessage" class="status"></div>
 <div id="teamList"></div>
 </div>
 
+<!-- VERWARNUNGSSYSTEM -->
 <div id="warnings" class="card page hidden">
 <h2>Verwarnungssystem</h2>
-<p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
+
+<h3>Neue Verwarnung erstellen</h3>
+
+<label>Name der betroffenen Person</label>
+<input id="warningPlayer" placeholder="Name des Spielers">
+
+<label>Grund der Verwarnung</label>
+<input id="warningTitle" placeholder="z. B. Regelverstoß">
+
+<label>Beschreibung</label>
+<textarea id="warningDetails" placeholder="Beschreibe hier den Vorfall..."></textarea>
+
+<button onclick="createWarning()">Verwarnung eintragen</button>
+
+<p id="warningMessage" class="status"></p>
+
+<hr>
+
+<h3>Alle Verwarnungen</h3>
+
+<button onclick="loadWarnings()">Verwarnungen aktualisieren</button>
+
+<div id="warningList"></div>
 </div>
 
+<!-- WEITERE BEREICHE -->
 <div id="applications" class="card page hidden">
 <h2>Bewerbungen</h2>
 <p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
@@ -149,6 +215,7 @@ Dein Discord-Konto wird geprüft.
 <h2>Interne Notizen</h2>
 <p>Dieser Bereich wird im nächsten Entwicklungsschritt eingerichtet.</p>
 </div>
+
 </div>
 </section>
 </main>
@@ -160,6 +227,9 @@ let currentProfile=null;
 
 const SITE_URL='https://hamburgcityrpdev.github.io/hamburg-city-rp-teamverwaltung/';
 
+const approvedRoles=['staff','moderator','management','owner'];
+
+// SYSTEM VERBINDEN
 function connect(){
  const url=document.getElementById('projectUrl').value.trim();
  const key=document.getElementById('publicKey').value.trim();
@@ -184,6 +254,7 @@ function connect(){
  }
 }
 
+// REGISTRIERUNG
 async function register(){
  if(!db)return;
 
@@ -201,6 +272,7 @@ async function register(){
  error?error.message:'Registrierung abgeschickt. Du kannst dich jetzt anmelden.';
 }
 
+// E-MAIL LOGIN
 async function login(){
  if(!db)return;
 
@@ -217,6 +289,7 @@ async function login(){
  await openDashboard(data.user);
 }
 
+// DISCORD LOGIN
 async function loginWithDiscord(){
  if(!db){
   alert('Bitte zuerst das System verbinden.');
@@ -228,17 +301,16 @@ async function loginWithDiscord(){
 
  const {error}=await db.auth.signInWithOAuth({
   provider:'discord',
-  options:{
-   redirectTo:SITE_URL
-  }
+  options:{redirectTo:SITE_URL}
  });
 
  if(error){
   document.getElementById('message').textContent=
-   'Discord-Anmeldung fehlgeschlagen: '+error.message;
+  'Discord-Anmeldung fehlgeschlagen: '+error.message;
  }
 }
 
+// SESSION PRÜFEN
 async function checkSession(){
  if(!db)return;
 
@@ -254,6 +326,7 @@ async function checkSession(){
  }
 }
 
+// DASHBOARD ÖFFNEN
 async function openDashboard(user){
  currentUser=user;
 
@@ -266,7 +339,7 @@ async function openDashboard(user){
   document.getElementById('auth').classList.remove('hidden');
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('message').textContent=
-   'Für dein Konto wurde noch kein Teamprofil angelegt. Bitte wende dich an die Serverleitung.';
+  'Für dein Konto wurde noch kein Teamprofil angelegt. Bitte wende dich an die Serverleitung.';
   return;
  }
 
@@ -288,7 +361,7 @@ async function openDashboard(user){
  document.getElementById('role').textContent=
  'Deine Rolle: '+(data.role||'Nicht freigeschaltet');
 
- const isPending=data.role==='pending'||!data.role;
+ const isPending=!approvedRoles.includes(data.role);
 
  document.getElementById('pendingNotice').classList.toggle('hidden',!isPending);
  document.getElementById('mainContent').classList.toggle('hidden',isPending);
@@ -302,6 +375,7 @@ async function openDashboard(user){
  }
 }
 
+// DISCORD STATUS
 async function checkDiscordLink(){
  const message=document.getElementById('discordMessage');
 
@@ -318,13 +392,12 @@ async function checkDiscordLink(){
   identity=>identity.provider==='discord'
  );
 
- if(linked){
-  message.textContent='Discord ist bereits mit deinem Konto verbunden.';
- }else{
-  message.textContent='Dein Discord-Konto ist noch nicht verbunden.';
- }
+ message.textContent=linked
+ ?'Discord ist bereits mit deinem Konto verbunden.'
+ :'Dein Discord-Konto ist noch nicht verbunden.';
 }
 
+// DISCORD VERKNÜPFEN
 async function linkDiscord(){
  if(!db||!currentUser){
   alert('Bitte melde dich zuerst mit deinem bestehenden Owner-Konto an.');
@@ -356,9 +429,7 @@ async function linkDiscord(){
 
  const {error}=await db.auth.linkIdentity({
   provider:'discord',
-  options:{
-   redirectTo:SITE_URL
-  }
+  options:{redirectTo:SITE_URL}
  });
 
  if(error){
@@ -366,6 +437,7 @@ async function linkDiscord(){
  }
 }
 
+// TEAM LADEN
 async function loadTeam(){
  const list=document.getElementById('teamList');
  const msg=document.getElementById('teamMessage');
@@ -461,11 +533,7 @@ async function loadTeam(){
   save.textContent='Änderungen speichern';
 
   save.onclick=()=>saveMember(
-   member.id,
-   name.value,
-   rank.value,
-   role.value,
-   active.value
+   member.id,name.value,rank.value,role.value,active.value
   );
 
   card.appendChild(save);
@@ -481,6 +549,7 @@ async function loadTeam(){
  });
 }
 
+// TEAMMITGLIED SPEICHERN
 async function saveMember(id,name,rank,role,active){
  if(!currentProfile||currentProfile.role!=='owner'){
   alert('Keine Berechtigung.');
@@ -509,6 +578,115 @@ async function saveMember(id,name,rank,role,active){
  }
 }
 
+// NEUE VERWARNUNG ERSTELLEN
+async function createWarning(){
+ const message=document.getElementById('warningMessage');
+
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){
+  message.textContent='Du bist nicht berechtigt, Verwarnungen einzutragen.';
+  return;
+ }
+
+ const player=document.getElementById('warningPlayer').value.trim();
+ const title=document.getElementById('warningTitle').value.trim();
+ const details=document.getElementById('warningDetails').value.trim();
+
+ if(!player||!title||!details){
+  message.textContent='Bitte fülle alle Felder aus.';
+  return;
+ }
+
+ message.textContent='Verwarnung wird gespeichert...';
+
+ const {error}=await db.from('staff_records').insert({
+  module:'warning',
+  title:title,
+  player:player,
+  details:details,
+  status:'open',
+  created_by:currentUser.id
+ });
+
+ if(error){
+  message.textContent='Fehler beim Speichern: '+error.message;
+  return;
+ }
+
+ document.getElementById('warningPlayer').value='';
+ document.getElementById('warningTitle').value='';
+ document.getElementById('warningDetails').value='';
+
+ message.textContent='Die Verwarnung wurde erfolgreich gespeichert.';
+
+ await loadWarnings();
+}
+
+// VERWARNUNGEN LADEN
+async function loadWarnings(){
+ const list=document.getElementById('warningList');
+
+ list.innerHTML='';
+
+ if(!currentProfile||!approvedRoles.includes(currentProfile.role)){
+  list.textContent='Du hast keine Berechtigung für diesen Bereich.';
+  return;
+ }
+
+ list.textContent='Verwarnungen werden geladen...';
+
+ const {data,error}=await db.from('staff_records')
+ .select('id,title,player,details,status,created_by,created_at')
+ .eq('module','warning')
+ .order('created_at',{ascending:false});
+
+ if(error){
+  list.textContent='Fehler beim Laden: '+error.message;
+  return;
+ }
+
+ list.innerHTML='';
+
+ if(!data||data.length===0){
+  list.textContent='Bisher wurden keine Verwarnungen eingetragen.';
+  return;
+ }
+
+ data.forEach(record=>{
+  const card=document.createElement('div');
+  card.className='record';
+
+  const heading=document.createElement('strong');
+  heading.textContent=record.player||'Unbekannte Person';
+  card.appendChild(heading);
+
+  const reason=document.createElement('p');
+  reason.textContent='Grund: '+(record.title||'Keine Angabe');
+  card.appendChild(reason);
+
+  const details=document.createElement('p');
+  details.textContent=record.details||'Keine Beschreibung';
+  card.appendChild(details);
+
+  const date=document.createElement('p');
+  date.className='small';
+  date.textContent='Datum: '+(
+   record.created_at
+   ?new Date(record.created_at).toLocaleString('de-DE')
+   :'Unbekannt'
+  );
+  card.appendChild(date);
+
+  const creator=document.createElement('p');
+  creator.className='small';
+  creator.textContent='Eingetragen von: '+
+   (record.created_by===currentUser.id?'Dir':'Teammitglied');
+  card.appendChild(creator);
+
+  list.appendChild(card);
+ });
+}
+
+// ABMELDEN
 async function logout(){
  if(db)await db.auth.signOut();
 
@@ -518,6 +696,7 @@ async function logout(){
  location.reload();
 }
 
+// SEITEN WECHSELN
 function showPage(id){
  document.querySelectorAll('.page').forEach(
   p=>p.classList.add('hidden')
@@ -528,8 +707,13 @@ function showPage(id){
  if(id==='team'){
   loadTeam();
  }
+
+ if(id==='warnings'){
+  loadWarnings();
+ }
 }
 
+// AUTOMATISCH VERBINDEN
 window.addEventListener('load',()=>{
  const url=localStorage.getItem('hcrp_url');
  const key=localStorage.getItem('hcrp_key');
