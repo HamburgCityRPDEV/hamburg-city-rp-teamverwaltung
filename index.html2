@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hamburg City RP | Teamverwaltung</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d18;color:#eef4ff;font-family:Arial,sans-serif}
+header{background:#101b30;padding:22px;border-bottom:2px solid #168bff}
+h1{margin:0;color:#45a5ff;font-size:25px}
+header p{margin:6px 0 0;color:#9eb3d1}
+main{max-width:950px;margin:35px auto;padding:15px}
+.card{background:#111d32;border:1px solid #263d5d;border-radius:13px;padding:22px;margin-bottom:18px}
+h2{color:#55aaff;margin-top:0}
+input,textarea,select{width:100%;padding:13px;margin:8px 0 15px;border-radius:7px;border:1px solid #385477;background:#091426;color:white}
+button{background:#087de0;color:white;border:0;border-radius:7px;padding:12px 18px;margin:5px 4px 5px 0;font-weight:bold;cursor:pointer}
+button:hover{background:#1595ff}
+.secondary{background:#263b59}
+.hidden{display:none}
+nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
+.status{color:#8eb8e9;font-size:14px}
+#message{padding:10px;color:#75bcff}
+</style>
+</head>
+<body>
+<header>
+<h1>HAMBURG CITY RP</h1>
+<p>Internes Teamverwaltungssystem</p>
+</header>
+
+<main>
+<section id="setup" class="card">
+<h2>System verbinden</h2>
+<p>Trage hier deine Supabase-Projektdaten ein.</p>
+<label>Project URL</label>
+<input id="projectUrl" placeholder="https://deinprojekt.supabase.co">
+<label>Public anon / publishable key</label>
+<input id="publicKey" placeholder="Dein öffentlicher Schlüssel">
+<button onclick="connect()">Verbinden</button>
+<p class="status">Verwende niemals den geheimen service_role-Schlüssel hier.</p>
+</section>
+
+<section id="auth" class="card hidden">
+<h2>Team-Login</h2>
+<label>E-Mail-Adresse</label>
+<input id="email" type="email" placeholder="E-Mail">
+<label>Passwort</label>
+<input id="password" type="password" placeholder="Passwort">
+<button onclick="login()">Anmelden</button>
+<button class="secondary" onclick="register()">Konto erstellen</button>
+<div id="message"></div>
+</section>
+
+<section id="dashboard" class="hidden">
+<div class="card">
+<h2>Willkommen bei Hamburg City RP</h2>
+<p id="welcome">Teamverwaltung</p>
+<p id="role" class="status"></p>
+<button class="secondary" onclick="logout()">Abmelden</button>
+</div>
+
+<nav>
+<button onclick="showPage('home')">Übersicht</button>
+<button onclick="showPage('team')">Teamverwaltung</button>
+<button onclick="showPage('warnings')">Verwarnungen</button>
+<button onclick="showPage('applications')">Bewerbungen</button>
+<button onclick="showPage('complaints')">Beschwerden</button>
+<button onclick="showPage('duty')">Dienstzeiten</button>
+<button onclick="showPage('notes')">Interne Notizen</button>
+</nav>
+
+<div id="home" class="card page">
+<h2>Dashboard</h2>
+<p>Willkommen im internen Verwaltungsbereich.</p>
+<p>Hier werden künftig die Verwaltungsbereiche deines RP-Servers zusammengeführt.</p>
+</div>
+
+<div id="team" class="card page hidden">
+<h2>Teamverwaltung</h2>
+<p>Hier verwaltest du künftig deine Teammitglieder und deren Rollen.</p>
+<p class="status">Die Rollenverwaltung wird im nächsten Schritt eingerichtet.</p>
+</div>
+
+<div id="warnings" class="card page hidden">
+<h2>Verwarnungssystem</h2>
+<p>Hier werden künftig Verwarnungen dokumentiert.</p>
+</div>
+
+<div id="applications" class="card page hidden">
+<h2>Bewerbungen</h2>
+<p>Verwaltung eingehender Team-Bewerbungen.</p>
+</div>
+
+<div id="complaints" class="card page hidden">
+<h2>Beschwerden</h2>
+<p>Verwaltung interner und externer Beschwerden.</p>
+</div>
+
+<div id="duty" class="card page hidden">
+<h2>Dienstzeiten</h2>
+<p>Übersicht über Dienstzeiten und Aktivität.</p>
+</div>
+
+<div id="notes" class="card page hidden">
+<h2>Interne Notizen</h2>
+<p>Interner Bereich für wichtige Teamhinweise.</p>
+</div>
+</section>
+</main>
+
+<script>
+let db=null;
+let currentUser=null;
+
+function connect(){
+ const url=document.getElementById('projectUrl').value.trim();
+ const key=document.getElementById('publicKey').value.trim();
+ if(!url||!key){alert('Bitte beide Supabase-Daten eintragen.');return;}
+ try{
+  db=window.supabase.createClient(url,key);
+  localStorage.setItem('hcrp_url',url);
+  localStorage.setItem('hcrp_key',key);
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('auth').classList.remove('hidden');
+  checkSession();
+ }catch(e){alert('Verbindung konnte nicht hergestellt werden.');}
+}
+
+async function checkSession(){
+ if(!db)return;
+ const {data}=await db.auth.getSession();
+ if(data.session)await openDashboard(data.session.user);
+}
+
+async function register(){
+ const email=document.getElementById('email').value.trim();
+ const password=document.getElementById('password').value;
+ if(password.length<8){alert('Das Passwort muss mindestens 8 Zeichen haben.');return;}
+ const {error}=await db.auth.signUp({email,password});
+ document.getElementById('message').textContent=error?error.message:'Registrierung abgeschickt. Prüfe gegebenenfalls deine E-Mails zur Bestätigung.';
+}
+
+async function login(){
+ const email=document.getElementById('email').value.trim();
+ const password=document.getElementById('password').value;
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){document.getElementById('message').textContent=error.message;return;}
+ await openDashboard(data.user);
+}
+
+async function openDashboard(user){
+ currentUser=user;
+ document.getElementById('auth').classList.add('hidden');
+ document.getElementById('setup').classList.add('hidden');
+ document.getElementById('dashboard').classList.remove('hidden');
+ document.getElementById('welcome').textContent='Angemeldet als '+user.email;
+ const {data,error}=await db.from('profiles').select('*').eq('id',user.id).single();
+ if(error){
+  document.getElementById('role').textContent='Profil wird geladen. Bitte später erneut anmelden.';
+ }else{
+  document.getElementById('role').textContent='Deine Rolle: '+(data.role||'Noch nicht freigeschaltet');
+ }
+}
+
+async function logout(){
+ await db.auth.signOut();
+ location.reload();
+}
+
+function showPage(id){
+ document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+ document.getElementById(id).classList.remove('hidden');
+}
+
+window.addEventListener('load',()=>{
+ const url=localStorage.getItem('hcrp_url');
+ const key=localStorage.getItem('hcrp_key');
+ if(url&&key){
+  db=window.supabase.createClient(url,key);
+  document.getElementById('setup').classList.add('hidden');
+  document.getElementById('auth').classList.remove('hidden');
+  checkSession();
+ }
+});
+</script>
+</body>
+</html>
