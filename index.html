@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hamburg City RP | Teamverwaltung</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080d18;color:#edf4ff;font-family:Arial,sans-serif}
@@ -17,30 +16,20 @@ main{max-width:1100px;margin:30px auto;padding:15px}
 .card{background:#111d32;border:1px solid #263d5d;border-radius:13px;padding:22px;margin-bottom:18px}
 h2{color:#55aaff;margin-top:0}
 h3{color:#8bc5ff}
-input,select,textarea{
- width:100%;padding:13px;margin:8px 0 15px;
- border-radius:7px;border:1px solid #385477;
- background:#091426;color:white;font-family:Arial,sans-serif
-}
+input,select,textarea{width:100%;padding:13px;margin:8px 0 15px;border-radius:7px;border:1px solid #385477;background:#091426;color:white;font-family:Arial,sans-serif}
 textarea{min-height:100px;resize:vertical}
-button{
- background:#087de0;color:white;border:0;border-radius:7px;
- padding:12px 18px;margin:5px 4px 5px 0;
- font-weight:bold;cursor:pointer
-}
+button{background:#087de0;color:white;border:0;border-radius:7px;padding:12px 18px;margin:5px 4px 5px 0;font-weight:bold;cursor:pointer}
 button:hover{background:#1595ff}
 .secondary{background:#263b59}
 .discord{background:#5865F2}
 .danger{background:#a83242}
 .danger:hover{background:#d94355}
 .success{background:#16794a}
+.warning{background:#806019}
 .hidden{display:none!important}
 nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:18px}
 .status{color:#9eb8d8;font-size:14px}
-.member,.record{
- background:#0b172a;border:1px solid #29415f;
- border-radius:9px;padding:15px;margin:12px 0
-}
+.member,.record{background:#0b172a;border:1px solid #29415f;border-radius:9px;padding:15px;margin:12px 0}
 .member strong,.record strong{color:#68b5ff}
 .small{font-size:13px;color:#9eb3d1}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
@@ -54,13 +43,11 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 .big-time{font-size:27px;color:#65b5ff;font-weight:bold}
 </style>
 </head>
-
 <body>
 <header>
 <h1>HAMBURG CITY RP</h1>
 <p>Internes Teamverwaltungssystem</p>
 </header>
-
 <main>
 
 <section id="setup" class="card">
@@ -88,7 +75,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 </section>
 
 <section id="dashboard" class="hidden">
-
 <div class="card">
 <h2>Willkommen bei Hamburg City RP</h2>
 <p id="welcome"></p>
@@ -104,7 +90,6 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 </div>
 
 <div id="mainContent">
-
 <nav>
 <button onclick="showPage('home')">Übersicht</button>
 <button onclick="showPage('sanctions')">Sanktionen</button>
@@ -119,103 +104,56 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <h2>Mitglieder-Dashboard</h2>
 <p>Willkommen im internen Verwaltungsbereich von Hamburg City RP.</p>
 <p id="homeRank" class="status"></p>
-
 <div class="grid">
-<div class="member">
-<strong>Sanktionssystem</strong>
-<p class="small">Verwarnungen, Kicks und Banns ansehen und eintragen.</p>
-<button onclick="showPage('sanctions')">Öffnen</button>
-</div>
-<div class="member">
-<strong>Interne Notizen</strong>
-<p class="small">Informationen für das Team erstellen und lesen.</p>
-<button onclick="showPage('notes')">Öffnen</button>
-</div>
-<div class="member">
-<strong>Dienstzeiten</strong>
-<p class="small">Dienst starten, beenden und Zeiten einsehen.</p>
-<button onclick="showPage('duty')">Öffnen</button>
-</div>
-<div class="member">
-<strong>Ankündigungen</strong>
-<p class="small">Wichtige Informationen der Serverleitung.</p>
-<button onclick="showPage('announcements')">Öffnen</button>
-</div>
-<div class="member">
-<strong>Team-Handbuch</strong>
-<p class="small">Allgemeine Hinweise für das Team.</p>
-<button onclick="showPage('handbook')">Öffnen</button>
-</div>
+<div class="member"><strong>Sanktionssystem</strong><p class="small">Verwarnungen, Kicks und Banns ansehen und eintragen.</p><button onclick="showPage('sanctions')">Öffnen</button></div>
+<div class="member"><strong>Interne Notizen</strong><p class="small">Informationen für das Team erstellen und lesen.</p><button onclick="showPage('notes')">Öffnen</button></div>
+<div class="member"><strong>Dienstzeiten</strong><p class="small">Dienst starten, beenden und Zeiten einsehen.</p><button onclick="showPage('duty')">Öffnen</button></div>
+<div class="member"><strong>Ankündigungen</strong><p class="small">Wichtige Informationen der Serverleitung.</p><button onclick="showPage('announcements')">Öffnen</button></div>
+<div class="member"><strong>Team-Handbuch</strong><p class="small">Allgemeine Hinweise für das Team.</p><button onclick="showPage('handbook')">Öffnen</button></div>
 </div>
 </div>
 
-<!-- SANKTIONEN -->
 <div id="sanctions" class="card page hidden">
 <h2>Sanktionssystem</h2>
 <p class="status">Alle freigeschalteten Teammitglieder können die Maßnahmen ansehen.</p>
-
 <div id="sanctionFormArea">
 <h3>Neue Maßnahme eintragen</h3>
-
-<label>Roblox User-ID</label>
-<input id="robloxId" placeholder="Roblox User-ID">
-
-<label>Roblox-Nutzername</label>
-<input id="robloxUsername" placeholder="Roblox-Nutzername">
-
+<label>Roblox User-ID</label><input id="robloxId" placeholder="Roblox User-ID">
+<label>Roblox-Nutzername</label><input id="robloxUsername" placeholder="Roblox-Nutzername">
 <label>Art der Maßnahme</label>
 <select id="actionType">
 <option value="warning">Verwarnung</option>
 <option value="kick">Kick</option>
 <option value="ban">Bann</option>
 </select>
-
-<label>Grund</label>
-<input id="sanctionTitle" placeholder="Grund der Maßnahme">
-
-<label>Beschreibung</label>
-<textarea id="sanctionDetails" placeholder="Weitere Informationen zum Vorfall..."></textarea>
-
+<label>Grund</label><input id="sanctionTitle" placeholder="Grund der Maßnahme">
+<label>Beschreibung</label><textarea id="sanctionDetails" placeholder="Weitere Informationen zum Vorfall..."></textarea>
 <button onclick="createSanction()">Maßnahme eintragen</button>
 <p id="sanctionMessage" class="status"></p>
 </div>
-
-<hr>
-<h3>Alle Maßnahmen</h3>
+<hr><h3>Alle Maßnahmen</h3>
 <button onclick="loadSanctions()">Liste aktualisieren</button>
 <div id="sanctionList"></div>
 </div>
 
-<!-- NOTIZEN -->
 <div id="notes" class="card page hidden">
 <h2>Interne Notizen</h2>
 <p class="status">Alle freigeschalteten Teammitglieder dürfen Notizen erstellen und ansehen.</p>
-
 <h3>Neue Notiz erstellen</h3>
-<label>Titel</label>
-<input id="noteTitle" placeholder="Titel der Notiz">
-<label>Notiz</label>
-<textarea id="noteDetails" placeholder="Schreibe hier deine Notiz..."></textarea>
+<label>Titel</label><input id="noteTitle" placeholder="Titel der Notiz">
+<label>Notiz</label><textarea id="noteDetails" placeholder="Schreibe hier deine Notiz..."></textarea>
 <button onclick="createNote()">Notiz speichern</button>
 <p id="noteMessage" class="status"></p>
-
-<hr>
-<h3>Alle Notizen</h3>
+<hr><h3>Alle Notizen</h3>
 <button onclick="loadNotes()">Notizen aktualisieren</button>
 <div id="noteList"></div>
 </div>
 
-<!-- ANKÜNDIGUNGEN -->
 <div id="announcements" class="card page hidden">
 <h2>Ankündigungen</h2>
-<div class="record">
-<strong>Willkommen im Team!</strong>
-<p>Willkommen im internen Bereich von Hamburg City RP.</p>
-<p class="small">Weitere Ankündigungen können später mit einer eigenen Verwaltungsfunktion ergänzt werden.</p>
-</div>
+<div class="record"><strong>Willkommen im Team!</strong><p>Willkommen im internen Bereich von Hamburg City RP.</p><p class="small">Weitere Ankündigungen können später ergänzt werden.</p></div>
 </div>
 
-<!-- HANDBUCH -->
 <div id="handbook" class="card page hidden">
 <h2>Team-Handbuch</h2>
 <h3>Allgemeine Teamregeln</h3>
@@ -230,10 +168,8 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <p>Verwarnungen, Kicks und Banns müssen sachlich und nachvollziehbar dokumentiert werden.</p>
 </div>
 
-<!-- DIENSTZEITEN -->
 <div id="duty" class="card page hidden">
 <h2>Dienstzeiterfassung</h2>
-
 <div class="member">
 <h3>Mein Dienst</h3>
 <p id="dutyStatus" class="status">Status wird geladen...</p>
@@ -242,14 +178,11 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <button id="stopDutyButton" class="danger hidden" onclick="stopDuty()">Dienst beenden</button>
 <p id="dutyMessage" class="status"></p>
 </div>
-
-<hr>
-<h3>Team-Dienstzeiten</h3>
+<hr><h3>Team-Dienstzeiten</h3>
 <button onclick="loadDutyOverview()">Übersicht aktualisieren</button>
 <div id="dutyOverview"></div>
 </div>
 
-<!-- TEAMVERWALTUNG -->
 <div id="team" class="card page hidden">
 <h2>Teamverwaltung</h2>
 <p class="status">Nur der Owner kann hier Teamkonten und Berechtigungen verwalten.</p>
@@ -257,40 +190,24 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 <div id="teamMessage" class="status"></div>
 <div id="teamList"></div>
 </div>
-
 </div>
 </section>
 </main>
 
 <script>
-let db=null;
-let currentUser=null;
-let currentProfile=null;
-let activeDuty=null;
-let dutyInterval=null;
-
+let db=null,currentUser=null,currentProfile=null,activeDuty=null,dutyInterval=null;
 const SITE_URL='https://hamburgcityrpdev.github.io/hamburg-city-rp-teamverwaltung/';
 const approvedRoles=['staff','moderator','management','owner'];
+let accessCheckInterval=null;
 
-function isModerator(){
- return currentProfile &&
- ['moderator','management','owner'].includes(currentProfile.role);
-}
-
-function canManage(){
- return currentProfile &&
- ['management','owner'].includes(currentProfile.role);
-}
+function isModerator(){return currentProfile&&['moderator','management','owner'].includes(currentProfile.role)}
+function canManage(){return currentProfile&&['management','owner'].includes(currentProfile.role)}
+function isOwner(){return currentProfile&&currentProfile.role==='owner'}
 
 function connect(){
  const url=document.getElementById('projectUrl').value.trim();
  const key=document.getElementById('publicKey').value.trim();
-
- if(!url||!key){
-  alert('Bitte beide Supabase-Daten eintragen.');
-  return;
- }
-
+ if(!url||!key){alert('Bitte beide Supabase-Daten eintragen.');return}
  try{
   db=window.supabase.createClient(url,key);
   localStorage.setItem('hcrp_url',url);
@@ -298,238 +215,149 @@ function connect(){
   document.getElementById('setup').classList.add('hidden');
   document.getElementById('auth').classList.remove('hidden');
   checkSession();
- }catch(e){
-  alert('Verbindung fehlgeschlagen.');
- }
+ }catch(e){alert('Verbindung fehlgeschlagen.')}
 }
 
 async function register(){
  if(!db)return;
  const email=document.getElementById('email').value.trim();
  const password=document.getElementById('password').value;
-
- if(!email||password.length<8){
-  alert('Bitte E-Mail und Passwort mit mindestens 8 Zeichen eingeben.');
-  return;
- }
-
+ if(!email||password.length<8){alert('Bitte E-Mail und Passwort mit mindestens 8 Zeichen eingeben.');return}
  const {error}=await db.auth.signUp({email,password});
- document.getElementById('message').textContent=
- error?error.message:'Registrierung abgeschickt. Dein Konto muss freigeschaltet werden.';
+ document.getElementById('message').textContent=error?error.message:'Registrierung abgeschickt. Dein Konto muss freigeschaltet werden.';
 }
 
 async function login(){
  if(!db)return;
  const email=document.getElementById('email').value.trim();
  const password=document.getElementById('password').value;
-
  const {data,error}=await db.auth.signInWithPassword({email,password});
-
- if(error){
-  document.getElementById('message').textContent=error.message;
-  return;
- }
-
+ if(error){document.getElementById('message').textContent=error.message;return}
  await openDashboard(data.user);
 }
 
 async function loginWithDiscord(){
- if(!db){
-  alert('Bitte zuerst das System verbinden.');
-  return;
- }
-
- const {error}=await db.auth.signInWithOAuth({
-  provider:'discord',
-  options:{redirectTo:SITE_URL}
- });
-
- if(error){
-  document.getElementById('message').textContent=error.message;
- }
+ if(!db){alert('Bitte zuerst das System verbinden.');return}
+ const {error}=await db.auth.signInWithOAuth({provider:'discord',options:{redirectTo:SITE_URL}});
+ if(error)document.getElementById('message').textContent=error.message;
 }
 
 async function checkSession(){
  if(!db)return;
  const {data,error}=await db.auth.getSession();
-
- if(error){
-  document.getElementById('message').textContent=error.message;
-  return;
- }
-
- if(data.session){
-  await openDashboard(data.session.user);
- }
+ if(error){document.getElementById('message').textContent=error.message;return}
+ if(data.session)await openDashboard(data.session.user);
 }
 
 async function openDashboard(user){
  currentUser=user;
 
+ // Prüft eine zeitlich begrenzte Sperre und gibt abgelaufene Sperren automatisch frei.
+ const {data:accessAllowed,error:accessError}=await db.rpc('refresh_my_access');
+ if(accessError){
+  document.getElementById('message').textContent='Zugriffsprüfung fehlgeschlagen: '+accessError.message;
+  return;
+ }
+
  const {data,error}=await db.from('profiles')
- .select('id,email,display_name,role,rank_name,is_active')
- .eq('id',user.id)
- .single();
+ .select('id,email,display_name,role,rank_name,is_active,ban_until,ban_reason')
+ .eq('id',user.id).single();
 
  if(error||!data){
   document.getElementById('auth').classList.remove('hidden');
   document.getElementById('dashboard').classList.add('hidden');
-  document.getElementById('message').textContent=
-  'Für dein Konto wurde noch kein Teamprofil angelegt. Bitte wende dich an die Serverleitung.';
+  document.getElementById('message').textContent='Für dein Konto wurde noch kein Teamprofil angelegt. Bitte wende dich an die Serverleitung.';
   return;
  }
 
  currentProfile=data;
 
- if(data.is_active===false){
-  alert('Dein Konto ist deaktiviert.');
-  await logout();
+ if(!accessAllowed||data.is_active===false){
+  let reason='Dein Zugang zur Webseite ist gesperrt.';
+  if(data.ban_until)reason+=' Deine Sperre endet am '+new Date(data.ban_until).toLocaleString('de-DE')+'.';
+  if(data.ban_reason)reason+=' Grund: '+data.ban_reason;
+  alert(reason);
+  await db.auth.signOut();
+  currentUser=null;currentProfile=null;
   return;
  }
 
  document.getElementById('auth').classList.add('hidden');
  document.getElementById('setup').classList.add('hidden');
  document.getElementById('dashboard').classList.remove('hidden');
-
- document.getElementById('welcome').textContent=
- 'Angemeldet als '+(data.display_name||user.email||'Discord-Konto');
-
- document.getElementById('role').textContent=
- 'Deine Rolle: '+(data.rank_name||data.role||'Nicht freigeschaltet');
-
- document.getElementById('homeRank').textContent=
- 'Dein Teamrang: '+(data.rank_name||data.role||'Nicht festgelegt');
+ document.getElementById('welcome').textContent='Angemeldet als '+(data.display_name||user.email||'Discord-Konto');
+ document.getElementById('role').textContent='Deine Rolle: '+(data.rank_name||data.role||'Nicht freigeschaltet');
+ document.getElementById('homeRank').textContent='Dein Teamrang: '+(data.rank_name||data.role||'Nicht festgelegt');
 
  const pending=!approvedRoles.includes(data.role);
  document.getElementById('pendingNotice').classList.toggle('hidden',!pending);
  document.getElementById('mainContent').classList.toggle('hidden',pending);
+ document.getElementById('linkDiscordButton').classList.toggle('hidden',data.role!=='owner');
+ document.getElementById('teamNavButton').classList.toggle('hidden',data.role!=='owner');
 
- document.getElementById('linkDiscordButton').classList.toggle(
-  'hidden',data.role!=='owner'
- );
-
- document.getElementById('teamNavButton').classList.toggle(
-  'hidden',data.role!=='owner'
- );
-
- // Normale Teammitglieder können nur Verwarnungen eintragen
  document.querySelector('#actionType option[value="kick"]').disabled=!isModerator();
  document.querySelector('#actionType option[value="ban"]').disabled=!isModerator();
 
+ if(accessCheckInterval)clearInterval(accessCheckInterval);
  if(!pending){
   await checkDiscordLink();
   await loadSanctions();
   await loadNotes();
   await loadMyDuty();
+  accessCheckInterval=setInterval(checkCurrentAccess,30000);
+ }
+}
+
+async function checkCurrentAccess(){
+ if(!currentUser)return;
+ const {data,error}=await db.rpc('refresh_my_access');
+ if(error)return;
+ if(data===false){
+  alert('Dein Zugang zur Webseite ist nicht mehr aktiv.');
+  await logout();
  }
 }
 
 async function checkDiscordLink(){
  const message=document.getElementById('discordMessage');
  if(!currentUser||!db)return;
-
  const {data,error}=await db.auth.getUserIdentities();
-
- if(error){
-  message.textContent='Discord-Verknüpfungsstatus konnte nicht geprüft werden.';
-  return;
- }
-
- const linked=(data.identities||[]).some(
-  identity=>identity.provider==='discord'
- );
-
- message.textContent=linked
- ?'Discord ist bereits mit deinem Konto verbunden.'
- :'Dein Discord-Konto ist noch nicht verbunden.';
+ if(error){message.textContent='Discord-Verknüpfungsstatus konnte nicht geprüft werden.';return}
+ const linked=(data.identities||[]).some(identity=>identity.provider==='discord');
+ message.textContent=linked?'Discord ist bereits mit deinem Konto verbunden.':'Dein Discord-Konto ist noch nicht verbunden.';
 }
 
 async function linkDiscord(){
- if(!db||!currentUser||!currentProfile||currentProfile.role!=='owner'){
-  alert('Bitte verwende hierfür dein bestehendes Owner-Konto.');
-  return;
- }
-
+ if(!db||!currentUser||!isOwner()){alert('Bitte verwende hierfür dein bestehendes Owner-Konto.');return}
  const {data:identityData,error:identityError}=await db.auth.getUserIdentities();
-
- if(identityError){
-  alert('Kontostatus konnte nicht geprüft werden: '+identityError.message);
-  return;
- }
-
- const alreadyLinked=(identityData.identities||[]).some(
-  identity=>identity.provider==='discord'
- );
-
- if(alreadyLinked){
-  document.getElementById('discordMessage').textContent=
-  'Discord ist bereits mit deinem Konto verbunden.';
-  return;
- }
-
- const {error}=await db.auth.linkIdentity({
-  provider:'discord',
-  options:{redirectTo:SITE_URL}
- });
-
+ if(identityError){alert('Kontostatus konnte nicht geprüft werden: '+identityError.message);return}
+ const alreadyLinked=(identityData.identities||[]).some(identity=>identity.provider==='discord');
+ if(alreadyLinked){document.getElementById('discordMessage').textContent='Discord ist bereits mit deinem Konto verbunden.';return}
+ const {error}=await db.auth.linkIdentity({provider:'discord',options:{redirectTo:SITE_URL}});
  if(error)alert('Discord-Verknüpfung fehlgeschlagen: '+error.message);
 }
 
 // SANKTIONEN
 async function createSanction(){
  const message=document.getElementById('sanctionMessage');
-
- if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){
-  message.textContent='Du bist nicht berechtigt.';
-  return;
- }
-
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){message.textContent='Du bist nicht berechtigt.';return}
  const robloxId=document.getElementById('robloxId').value.trim();
  const robloxUsername=document.getElementById('robloxUsername').value.trim();
  const actionType=document.getElementById('actionType').value;
  const title=document.getElementById('sanctionTitle').value.trim();
  const details=document.getElementById('sanctionDetails').value.trim();
-
- if(!robloxId||!robloxUsername||!title||!details){
-  message.textContent='Bitte fülle alle Felder aus.';
-  return;
- }
-
- if(!/^[0-9]+$/.test(robloxId)){
-  message.textContent='Die Roblox User-ID darf nur Zahlen enthalten.';
-  return;
- }
-
- if(actionType!=='warning'&&!isModerator()){
-  message.textContent='Nur Moderatoren und die Leitung dürfen Kicks und Banns eintragen.';
-  return;
- }
-
+ if(!robloxId||!robloxUsername||!title||!details){message.textContent='Bitte fülle alle Felder aus.';return}
+ if(!/^[0-9]+$/.test(robloxId)){message.textContent='Die Roblox User-ID darf nur Zahlen enthalten.';return}
+ if(actionType!=='warning'&&!isModerator()){message.textContent='Nur Moderatoren und die Leitung dürfen Kicks und Banns eintragen.';return}
  message.textContent='Maßnahme wird gespeichert...';
-
  const {error}=await db.from('staff_records').insert({
-  module:'sanction',
-  action_type:actionType,
-  roblox_user_id:robloxId,
-  roblox_username:robloxUsername,
-  player:robloxUsername,
-  title:title,
-  details:details,
-  status:'open',
-  created_by:currentUser.id
+  module:'sanction',action_type:actionType,roblox_user_id:robloxId,
+  roblox_username:robloxUsername,player:robloxUsername,title:title,
+  details:details,status:'open',created_by:currentUser.id
  });
-
- if(error){
-  message.textContent='Fehler beim Speichern: '+error.message;
-  return;
- }
-
- document.getElementById('robloxId').value='';
- document.getElementById('robloxUsername').value='';
- document.getElementById('sanctionTitle').value='';
- document.getElementById('sanctionDetails').value='';
+ if(error){message.textContent='Fehler beim Speichern: '+error.message;return}
+ ['robloxId','robloxUsername','sanctionTitle','sanctionDetails'].forEach(id=>document.getElementById(id).value='');
  document.getElementById('actionType').value='warning';
-
  message.textContent='Die Maßnahme wurde erfolgreich gespeichert.';
  await loadSanctions();
 }
@@ -537,182 +365,62 @@ async function createSanction(){
 async function loadSanctions(){
  const list=document.getElementById('sanctionList');
  if(!list||!currentProfile)return;
-
  list.innerHTML='Wird geladen...';
-
- const {data,error}=await db.from('staff_records')
- .select('id,module,action_type,roblox_user_id,roblox_username,title,player,details,status,created_by,created_at')
- .in('module',['warning','sanction'])
- .order('created_at',{ascending:false});
-
- if(error){
-  list.textContent='Fehler beim Laden: '+error.message;
-  return;
- }
-
+ const {data,error}=await db.from('staff_records').select('id,module,action_type,roblox_user_id,roblox_username,title,player,details,status,created_by,created_at').in('module',['warning','sanction']).order('created_at',{ascending:false});
+ if(error){list.textContent='Fehler beim Laden: '+error.message;return}
  list.innerHTML='';
-
- if(!data||data.length===0){
-  list.textContent='Bisher wurden keine Maßnahmen eingetragen.';
-  return;
- }
-
+ if(!data||!data.length){list.textContent='Bisher wurden keine Maßnahmen eingetragen.';return}
  data.forEach(record=>{
-  const card=document.createElement('div');
-  card.className='record';
-
+  const card=document.createElement('div');card.className='record';
   const type=record.action_type||'warning';
   const labels={warning:'VERWARNUNG',kick:'KICK',ban:'BANN'};
-
-  const tag=document.createElement('span');
-  tag.className='tag '+(type==='ban'?'ban-tag':type==='kick'?'kick-tag':'warning-tag');
-  tag.textContent=labels[type]||'VERWARNUNG';
-  card.appendChild(tag);
-
-  const heading=document.createElement('h3');
-  heading.textContent=record.roblox_username||record.player||'Unbekannter Spieler';
-  card.appendChild(heading);
-
-  const id=document.createElement('p');
-  id.className='small';
-  id.textContent='Roblox User-ID: '+(record.roblox_user_id||'Nicht hinterlegt');
-  card.appendChild(id);
-
-  const reason=document.createElement('p');
-  reason.textContent='Grund: '+(record.title||'Keine Angabe');
-  card.appendChild(reason);
-
-  const details=document.createElement('p');
-  details.textContent=record.details||'Keine Beschreibung';
-  card.appendChild(details);
-
-  const date=document.createElement('p');
-  date.className='small';
-  date.textContent='Datum: '+(record.created_at?new Date(record.created_at).toLocaleString('de-DE'):'Unbekannt');
-  card.appendChild(date);
-
-  const creator=document.createElement('p');
-  creator.className='small';
-  creator.textContent='Eingetragen von: '+(record.created_by===currentUser.id?'Dir':'Teammitglied');
-  card.appendChild(creator);
-
-  if(canManage()){
-   const del=document.createElement('button');
-   del.textContent='Eintrag löschen';
-   del.className='danger';
-   del.onclick=()=>deleteSanction(record.id);
-   card.appendChild(del);
-  }
-
+  const tag=document.createElement('span');tag.className='tag '+(type==='ban'?'ban-tag':type==='kick'?'kick-tag':'warning-tag');tag.textContent=labels[type]||'VERWARNUNG';card.appendChild(tag);
+  const heading=document.createElement('h3');heading.textContent=record.roblox_username||record.player||'Unbekannter Spieler';card.appendChild(heading);
+  const id=document.createElement('p');id.className='small';id.textContent='Roblox User-ID: '+(record.roblox_user_id||'Nicht hinterlegt');card.appendChild(id);
+  const reason=document.createElement('p');reason.textContent='Grund: '+(record.title||'Keine Angabe');card.appendChild(reason);
+  const details=document.createElement('p');details.textContent=record.details||'Keine Beschreibung';card.appendChild(details);
+  const date=document.createElement('p');date.className='small';date.textContent='Datum: '+(record.created_at?new Date(record.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
+  const creator=document.createElement('p');creator.className='small';creator.textContent='Eingetragen von: '+(record.created_by===currentUser.id?'Dir':'Teammitglied');card.appendChild(creator);
+  if(canManage()){const del=document.createElement('button');del.textContent='Eintrag löschen';del.className='danger';del.onclick=()=>deleteSanction(record.id);card.appendChild(del)}
   list.appendChild(card);
  });
 }
 
 async function deleteSanction(id){
- if(!canManage()){
-  alert('Keine Berechtigung zum Löschen.');
-  return;
- }
-
+ if(!canManage()){alert('Keine Berechtigung zum Löschen.');return}
  if(!confirm('Möchtest du diesen Eintrag wirklich dauerhaft löschen?'))return;
-
- const {data,error}=await db.from('staff_records')
- .delete()
- .eq('id',id)
- .in('module',['warning','sanction'])
- .select('id')
- .maybeSingle();
-
- if(error){
-  alert('Fehler beim Löschen: '+error.message);
-  return;
- }
-
- if(!data){
-  alert('Der Eintrag wurde nicht gelöscht. Bitte prüfe die Supabase-Berechtigungen.');
-  return;
- }
-
- alert('Eintrag erfolgreich gelöscht.');
- await loadSanctions();
+ const {data,error}=await db.from('staff_records').delete().eq('id',id).in('module',['warning','sanction']).select('id').maybeSingle();
+ if(error){alert('Fehler beim Löschen: '+error.message);return}
+ if(!data){alert('Der Eintrag wurde nicht gelöscht. Bitte prüfe die Supabase-Berechtigungen.');return}
+ alert('Eintrag erfolgreich gelöscht.');await loadSanctions();
 }
 
 // NOTIZEN
 async function createNote(){
  const message=document.getElementById('noteMessage');
-
- if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){
-  message.textContent='Du hast keine Berechtigung.';
-  return;
- }
-
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){message.textContent='Du hast keine Berechtigung.';return}
  const title=document.getElementById('noteTitle').value.trim();
  const details=document.getElementById('noteDetails').value.trim();
-
- if(!title||!details){
-  message.textContent='Bitte Titel und Notiz ausfüllen.';
-  return;
- }
-
- const {error}=await db.from('staff_records').insert({
-  module:'note',
-  title:title,
-  details:details,
-  status:'open',
-  created_by:currentUser.id
- });
-
- if(error){
-  message.textContent='Fehler beim Speichern: '+error.message;
-  return;
- }
-
- document.getElementById('noteTitle').value='';
- document.getElementById('noteDetails').value='';
- message.textContent='Notiz gespeichert.';
- await loadNotes();
+ if(!title||!details){message.textContent='Bitte Titel und Notiz ausfüllen.';return}
+ const {error}=await db.from('staff_records').insert({module:'note',title,details,status:'open',created_by:currentUser.id});
+ if(error){message.textContent='Fehler beim Speichern: '+error.message;return}
+ document.getElementById('noteTitle').value='';document.getElementById('noteDetails').value='';
+ message.textContent='Notiz gespeichert.';await loadNotes();
 }
 
 async function loadNotes(){
  const list=document.getElementById('noteList');
  if(!list||!currentProfile)return;
-
  list.innerHTML='Notizen werden geladen...';
-
- const {data,error}=await db.from('staff_records')
- .select('id,title,details,created_by,created_at')
- .eq('module','note')
- .order('created_at',{ascending:false});
-
- if(error){
-  list.textContent='Fehler beim Laden: '+error.message;
-  return;
- }
-
+ const {data,error}=await db.from('staff_records').select('id,title,details,created_by,created_at').eq('module','note').order('created_at',{ascending:false});
+ if(error){list.textContent='Fehler beim Laden: '+error.message;return}
  list.innerHTML='';
-
- if(!data||data.length===0){
-  list.textContent='Noch keine Notizen vorhanden.';
-  return;
- }
-
+ if(!data||!data.length){list.textContent='Noch keine Notizen vorhanden.';return}
  data.forEach(note=>{
-  const card=document.createElement('div');
-  card.className='record';
-
-  const heading=document.createElement('strong');
-  heading.textContent=note.title||'Notiz';
-  card.appendChild(heading);
-
-  const details=document.createElement('p');
-  details.textContent=note.details||'';
-  card.appendChild(details);
-
-  const date=document.createElement('p');
-  date.className='small';
-  date.textContent='Erstellt: '+(note.created_at?new Date(note.created_at).toLocaleString('de-DE'):'Unbekannt');
-  card.appendChild(date);
-
+  const card=document.createElement('div');card.className='record';
+  const heading=document.createElement('strong');heading.textContent=note.title||'Notiz';card.appendChild(heading);
+  const details=document.createElement('p');details.textContent=note.details||'';card.appendChild(details);
+  const date=document.createElement('p');date.className='small';date.textContent='Erstellt: '+(note.created_at?new Date(note.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
   list.appendChild(card);
  });
 }
@@ -720,334 +428,205 @@ async function loadNotes(){
 // DIENSTZEITEN
 function formatDuration(seconds){
  seconds=Math.max(0,Math.floor(seconds||0));
- const hours=Math.floor(seconds/3600);
- const minutes=Math.floor((seconds%3600)/60);
- const secs=seconds%60;
- return String(hours).padStart(2,'0')+':'+
-        String(minutes).padStart(2,'0')+':'+
-        String(secs).padStart(2,'0');
+ const hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=seconds%60;
+ return String(hours).padStart(2,'0')+':'+String(minutes).padStart(2,'0')+':'+String(secs).padStart(2,'0');
 }
-
 function updateDutyTimer(){
  const timer=document.getElementById('dutyTimer');
- if(!activeDuty){
-  timer.textContent='00:00:00';
-  return;
- }
-
- const started=new Date(activeDuty.started_at).getTime();
- const seconds=(Date.now()-started)/1000;
- timer.textContent=formatDuration(seconds);
+ if(!activeDuty){timer.textContent='00:00:00';return}
+ timer.textContent=formatDuration((Date.now()-new Date(activeDuty.started_at).getTime())/1000);
 }
-
 async function loadMyDuty(){
  if(!currentUser)return;
-
- const {data,error}=await db.from('duty_entries')
- .select('id,started_at,ended_at')
- .eq('user_id',currentUser.id)
- .is('ended_at',null)
- .maybeSingle();
-
- if(error){
-  document.getElementById('dutyStatus').textContent=
-  'Fehler beim Laden deines Dienststatus: '+error.message;
-  return;
- }
-
- activeDuty=data||null;
- renderDutyStatus();
+ const {data,error}=await db.from('duty_entries').select('id,started_at,ended_at').eq('user_id',currentUser.id).is('ended_at',null).maybeSingle();
+ if(error){document.getElementById('dutyStatus').textContent='Fehler beim Laden deines Dienststatus: '+error.message;return}
+ activeDuty=data||null;renderDutyStatus();
 }
-
 function renderDutyStatus(){
- const status=document.getElementById('dutyStatus');
- const start=document.getElementById('startDutyButton');
- const stop=document.getElementById('stopDutyButton');
-
+ const status=document.getElementById('dutyStatus'),start=document.getElementById('startDutyButton'),stop=document.getElementById('stopDutyButton');
  if(activeDuty){
   status.innerHTML='<span class="online">● Du bist aktuell im Dienst.</span>';
-  start.classList.add('hidden');
-  stop.classList.remove('hidden');
-
+  start.classList.add('hidden');stop.classList.remove('hidden');
   if(dutyInterval)clearInterval(dutyInterval);
-  updateDutyTimer();
-  dutyInterval=setInterval(updateDutyTimer,1000);
+  updateDutyTimer();dutyInterval=setInterval(updateDutyTimer,1000);
  }else{
   status.innerHTML='<span class="offline">● Du bist aktuell nicht im Dienst.</span>';
-  start.classList.remove('hidden');
-  stop.classList.add('hidden');
+  start.classList.remove('hidden');stop.classList.add('hidden');
   document.getElementById('dutyTimer').textContent='00:00:00';
-
-  if(dutyInterval){
-   clearInterval(dutyInterval);
-   dutyInterval=null;
-  }
+  if(dutyInterval){clearInterval(dutyInterval);dutyInterval=null}
  }
 }
-
 async function startDuty(){
- if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){
-  alert('Du bist nicht berechtigt, Dienst zu starten.');
-  return;
- }
-
- if(activeDuty){
-  alert('Du bist bereits im Dienst.');
-  return;
- }
-
- const {data,error}=await db.from('duty_entries')
- .insert({user_id:currentUser.id})
- .select('id,started_at,ended_at')
- .single();
-
- if(error){
-  document.getElementById('dutyMessage').textContent=
-  'Dienst konnte nicht gestartet werden: '+error.message;
-  return;
- }
-
- activeDuty=data;
- document.getElementById('dutyMessage').textContent='Dein Dienst wurde gestartet.';
- renderDutyStatus();
- await loadDutyOverview();
+ if(!currentUser||!currentProfile||!approvedRoles.includes(currentProfile.role)){alert('Du bist nicht berechtigt, Dienst zu starten.');return}
+ if(activeDuty){alert('Du bist bereits im Dienst.');return}
+ const {data,error}=await db.from('duty_entries').insert({user_id:currentUser.id}).select('id,started_at,ended_at').single();
+ if(error){document.getElementById('dutyMessage').textContent='Dienst konnte nicht gestartet werden: '+error.message;return}
+ activeDuty=data;document.getElementById('dutyMessage').textContent='Dein Dienst wurde gestartet.';renderDutyStatus();await loadDutyOverview();
 }
-
 async function stopDuty(){
  if(!activeDuty||!currentUser)return;
-
- const {data,error}=await db.from('duty_entries')
- .update({ended_at:new Date().toISOString()})
- .eq('id',activeDuty.id)
- .eq('user_id',currentUser.id)
- .is('ended_at',null)
- .select('id')
- .maybeSingle();
-
- if(error){
-  document.getElementById('dutyMessage').textContent=
-  'Dienst konnte nicht beendet werden: '+error.message;
-  return;
- }
-
- if(!data){
-  document.getElementById('dutyMessage').textContent=
-  'Der Dienst konnte nicht beendet werden. Bitte aktualisiere die Seite.';
-  return;
- }
-
- activeDuty=null;
- document.getElementById('dutyMessage').textContent='Dein Dienst wurde beendet.';
- renderDutyStatus();
- await loadDutyOverview();
+ const {data,error}=await db.from('duty_entries').update({ended_at:new Date().toISOString()}).eq('id',activeDuty.id).eq('user_id',currentUser.id).is('ended_at',null).select('id').maybeSingle();
+ if(error){document.getElementById('dutyMessage').textContent='Dienst konnte nicht beendet werden: '+error.message;return}
+ if(!data){document.getElementById('dutyMessage').textContent='Der Dienst konnte nicht beendet werden. Bitte aktualisiere die Seite.';return}
+ activeDuty=null;document.getElementById('dutyMessage').textContent='Dein Dienst wurde beendet.';renderDutyStatus();await loadDutyOverview();
 }
-
 async function loadDutyOverview(){
- const list=document.getElementById('dutyOverview');
- if(!list)return;
-
+ const list=document.getElementById('dutyOverview');if(!list)return;
  list.textContent='Dienstzeiten werden geladen...';
-
  const {data,error}=await db.rpc('get_duty_overview');
-
- if(error){
-  list.textContent='Fehler beim Laden der Dienstzeiten: '+error.message;
-  return;
- }
-
+ if(error){list.textContent='Fehler beim Laden der Dienstzeiten: '+error.message;return}
  list.innerHTML='';
-
- if(!data||data.length===0){
-  list.textContent='Noch keine Team-Dienstzeiten vorhanden.';
-  return;
- }
-
+ if(!data||!data.length){list.textContent='Noch keine Team-Dienstzeiten vorhanden.';return}
  data.forEach(member=>{
-  const card=document.createElement('div');
-  card.className='record';
-
-  const name=document.createElement('strong');
-  name.textContent=member.display_name||'Teammitglied';
-  card.appendChild(name);
-
-  const rank=document.createElement('p');
-  rank.className='small';
-  rank.textContent=(member.rank_name||member.role||'Teammitglied');
-  card.appendChild(rank);
-
-  const total=document.createElement('p');
-  total.textContent='Gesamte Dienstzeit: '+formatDuration(member.total_seconds);
-  card.appendChild(total);
-
+  const card=document.createElement('div');card.className='record';
+  const name=document.createElement('strong');name.textContent=member.display_name||'Teammitglied';card.appendChild(name);
+  const rank=document.createElement('p');rank.className='small';rank.textContent=member.rank_name||member.role||'Teammitglied';card.appendChild(rank);
+  const total=document.createElement('p');total.textContent='Gesamte Dienstzeit: '+formatDuration(member.total_seconds);card.appendChild(total);
   const status=document.createElement('p');
   if(member.active_since){
    status.innerHTML='<span class="online">● Aktuell im Dienst</span>';
-   const since=document.createElement('p');
-   since.className='small';
-   since.textContent='Dienstbeginn: '+new Date(member.active_since).toLocaleString('de-DE');
-   card.appendChild(since);
-  }else{
-   status.innerHTML='<span class="offline">● Nicht im Dienst</span>';
-  }
-  card.appendChild(status);
-
-  list.appendChild(card);
+   const since=document.createElement('p');since.className='small';since.textContent='Dienstbeginn: '+new Date(member.active_since).toLocaleString('de-DE');card.appendChild(since);
+  }else status.innerHTML='<span class="offline">● Nicht im Dienst</span>';
+  card.appendChild(status);list.appendChild(card);
  });
 }
 
-// TEAMVERWALTUNG
+// OWNER-TEAMVERWALTUNG
 async function loadTeam(){
- const list=document.getElementById('teamList');
- const msg=document.getElementById('teamMessage');
-
- list.innerHTML='';
- msg.textContent='Team wird geladen...';
-
- if(!currentProfile||currentProfile.role!=='owner'){
-  msg.textContent='Nur der Owner kann die Teamverwaltung bearbeiten.';
-  return;
- }
-
- const {data,error}=await db.from('profiles')
- .select('id,email,display_name,role,rank_name,is_active')
- .order('created_at',{ascending:true});
-
- if(error){
-  msg.textContent='Fehler beim Laden: '+error.message;
-  return;
- }
-
+ const list=document.getElementById('teamList'),msg=document.getElementById('teamMessage');
+ list.innerHTML='';msg.textContent='Team wird geladen...';
+ if(!isOwner()){msg.textContent='Nur der Owner kann die Teamverwaltung bearbeiten.';return}
+ const {data,error}=await db.from('profiles').select('id,email,display_name,role,rank_name,is_active,ban_until,ban_reason').order('created_at',{ascending:true});
+ if(error){msg.textContent='Fehler beim Laden: '+error.message;return}
  msg.textContent=data.length+' Teamkonten gefunden.';
-
  data.forEach(member=>{
-  const card=document.createElement('div');
-  card.className='member';
+  const card=document.createElement('div');card.className='member';
+  const heading=document.createElement('strong');heading.textContent=member.display_name||member.email||'Unbekanntes Mitglied';card.appendChild(heading);
+  const email=document.createElement('p');email.className='small';email.textContent=member.email||'Keine E-Mail hinterlegt';card.appendChild(email);
+  const id=document.createElement('p');id.className='small';id.textContent='Benutzer-ID: '+member.id;card.appendChild(id);
 
-  const heading=document.createElement('strong');
-  heading.textContent=member.display_name||member.email||'Unbekanntes Mitglied';
-  card.appendChild(heading);
+  const state=document.createElement('p');
+  if(member.is_active===false){
+   state.innerHTML='<span class="tag ban-tag">GESPERRT</span>';
+   if(member.ban_until)state.textContent+=' Gesperrt bis: '+new Date(member.ban_until).toLocaleString('de-DE');
+   else state.textContent+=' Dauerhafte Sperre';
+   if(member.ban_reason)state.textContent+=' | Grund: '+member.ban_reason;
+  }else state.innerHTML='<span class="tag">AKTIV</span>';
+  card.appendChild(state);
 
-  const email=document.createElement('p');
-  email.className='small';
-  email.textContent=member.email||'Keine E-Mail hinterlegt';
-  card.appendChild(email);
-
-  const roleLabel=document.createElement('label');
-  roleLabel.textContent='Rolle';
-  card.appendChild(roleLabel);
-
+  const roleLabel=document.createElement('label');roleLabel.textContent='Rolle';card.appendChild(roleLabel);
   const role=document.createElement('select');
-  ['pending','staff','moderator','management','owner'].forEach(value=>{
-   const option=document.createElement('option');
-   option.value=value;
-   option.textContent=value;
-   role.appendChild(option);
-  });
-  role.value=member.role||'pending';
-  card.appendChild(role);
+  ['pending','staff','moderator','management','owner'].forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;role.appendChild(option)});
+  role.value=member.role||'pending';card.appendChild(role);
 
-  const nameLabel=document.createElement('label');
-  nameLabel.textContent='Anzeigename';
-  card.appendChild(nameLabel);
+  const nameLabel=document.createElement('label');nameLabel.textContent='Anzeigename';card.appendChild(nameLabel);
+  const name=document.createElement('input');name.value=member.display_name||'';name.placeholder='Name des Mitglieds';card.appendChild(name);
 
-  const name=document.createElement('input');
-  name.value=member.display_name||'';
-  name.placeholder='Name des Mitglieds';
-  card.appendChild(name);
+  const rankLabel=document.createElement('label');rankLabel.textContent='Teamrang';card.appendChild(rankLabel);
+  const rank=document.createElement('input');rank.value=member.rank_name||'';rank.placeholder='z. B. Moderator';card.appendChild(rank);
 
-  const rankLabel=document.createElement('label');
-  rankLabel.textContent='Teamrang';
-  card.appendChild(rankLabel);
-
-  const rank=document.createElement('input');
-  rank.value=member.rank_name||'';
-  rank.placeholder='z. B. Moderator';
-  card.appendChild(rank);
-
-  const activeLabel=document.createElement('label');
-  activeLabel.textContent='Mitglied aktiv';
-  card.appendChild(activeLabel);
-
+  const activeLabel=document.createElement('label');activeLabel.textContent='Mitglied aktiv';card.appendChild(activeLabel);
   const active=document.createElement('select');
-  [['true','Ja'],['false','Nein']].forEach(pair=>{
-   const option=document.createElement('option');
-   option.value=pair[0];
-   option.textContent=pair[1];
-   active.appendChild(option);
-  });
-  active.value=member.is_active===false?'false':'true';
-  card.appendChild(active);
+  [['true','Ja'],['false','Nein']].forEach(pair=>{const option=document.createElement('option');option.value=pair[0];option.textContent=pair[1];active.appendChild(option)});
+  active.value=member.is_active===false?'false':'true';card.appendChild(active);
 
-  const save=document.createElement('button');
-  save.textContent='Änderungen speichern';
-  save.onclick=()=>saveMember(member.id,name.value,rank.value,role.value,active.value);
-  card.appendChild(save);
+  const save=document.createElement('button');save.textContent='Änderungen speichern';save.onclick=()=>saveMember(member.id,name.value,rank.value,role.value,active.value);card.appendChild(save);
 
+  if(member.id!==currentUser.id&&member.role!=='owner'){
+   const separator=document.createElement('hr');card.appendChild(separator);
+   const banTitle=document.createElement('h3');banTitle.textContent='Webseiten-Zugang sperren';card.appendChild(banTitle);
+   const minutesLabel=document.createElement('label');minutesLabel.textContent='Sperrdauer in Minuten';card.appendChild(minutesLabel);
+   const minutes=document.createElement('input');minutes.type='number';minutes.min='1';minutes.max='525600';minutes.placeholder='z. B. 60';card.appendChild(minutes);
+   const reason=document.createElement('input');reason.placeholder='Grund der Sperre';card.appendChild(reason);
+
+   const tempButton=document.createElement('button');tempButton.className='warning';tempButton.textContent='Für Minuten sperren';
+   tempButton.onclick=()=>suspendMember(member.id,minutes.value,reason.value);
+   card.appendChild(tempButton);
+
+   const permanentButton=document.createElement('button');permanentButton.className='danger';permanentButton.textContent='Dauerhaft sperren';
+   permanentButton.onclick=()=>suspendMember(member.id,null,reason.value);
+   card.appendChild(permanentButton);
+
+   if(member.is_active===false){
+    const unlock=document.createElement('button');unlock.className='success';unlock.textContent='Sperre aufheben';unlock.onclick=()=>unsuspendMember(member.id);card.appendChild(unlock);
+   }
+
+   const deleteButton=document.createElement('button');deleteButton.className='danger';deleteButton.textContent='Konto dauerhaft löschen';
+   deleteButton.onclick=()=>deleteMember(member.id,member.display_name||member.email||'dieses Mitglied');
+   card.appendChild(deleteButton);
+  }else if(member.id===currentUser.id){
+   const note=document.createElement('p');note.className='small';note.textContent='Dein eigenes Owner-Konto kann hier nicht gesperrt oder gelöscht werden.';card.appendChild(note);
+  }else{
+   const note=document.createElement('p');note.className='small';note.textContent='Andere Owner-Konten können hier nicht gesperrt oder gelöscht werden.';card.appendChild(note);
+  }
   list.appendChild(card);
  });
 }
 
 async function saveMember(id,name,rank,role,active){
- if(!currentProfile||currentProfile.role!=='owner'){
-  alert('Keine Berechtigung.');
-  return;
+ if(!isOwner()){alert('Keine Berechtigung.');return}
+ if(id===currentUser.id&&role!=='owner'){alert('Du kannst dir selbst nicht den Owner-Rang entziehen.');return}
+ const {error}=await db.from('profiles').update({display_name:name.trim(),rank_name:rank.trim(),role:role,is_active:active==='true'}).eq('id',id);
+ if(error){alert('Speichern fehlgeschlagen: '+error.message);return}
+ alert('Änderungen gespeichert.');await loadTeam();
+ if(id===currentUser.id)await openDashboard(currentUser);
+}
+
+async function suspendMember(id,minutes,reason){
+ if(!isOwner()){alert('Nur der Owner darf Mitglieder sperren.');return}
+ if(id===currentUser.id){alert('Du kannst dich nicht selbst sperren.');return}
+ let until=null;
+ if(minutes!==null){
+  const value=Number(minutes);
+  if(!Number.isInteger(value)||value<1||value>525600){alert('Bitte eine Minutenzahl zwischen 1 und 525600 eingeben.');return}
+  until=new Date(Date.now()+value*60000).toISOString();
  }
-
- const {error}=await db.from('profiles')
- .update({
-  display_name:name.trim(),
-  rank_name:rank.trim(),
-  role:role,
-  is_active:active==='true'
- })
- .eq('id',id);
-
- if(error){
-  alert('Speichern fehlgeschlagen: '+error.message);
-  return;
- }
-
- alert('Änderungen gespeichert.');
+ const {error}=await db.from('profiles').update({is_active:false,ban_until:until,ban_reason:reason.trim()||'Keine Begründung angegeben'}).eq('id',id);
+ if(error){alert('Sperren fehlgeschlagen: '+error.message);return}
+ alert(until?'Mitglied wurde zeitlich begrenzt gesperrt.':'Mitglied wurde dauerhaft gesperrt.');
  await loadTeam();
+}
 
- if(id===currentUser.id){
-  await openDashboard(currentUser);
- }
+async function unsuspendMember(id){
+ if(!isOwner()){alert('Nur der Owner darf Sperren aufheben.');return}
+ if(!confirm('Möchtest du dieses Mitglied wieder freischalten?'))return;
+ const {error}=await db.from('profiles').update({is_active:true,ban_until:null,ban_reason:null}).eq('id',id);
+ if(error){alert('Freigabe fehlgeschlagen: '+error.message);return}
+ alert('Mitglied wurde wieder freigeschaltet.');await loadTeam();
+}
+
+async function deleteMember(id,name){
+ if(!isOwner()){alert('Nur der Owner darf Konten löschen.');return}
+ if(id===currentUser.id){alert('Du kannst dein eigenes Konto nicht löschen.');return}
+ const confirmation=prompt('Du bist dabei, das Konto von '+name+' dauerhaft zu löschen.\nTippe LÖSCHEN zur Bestätigung:');
+ if(confirmation!=='LÖSCHEN')return;
+
+ const {data,error}=await db.functions.invoke('owner-delete-user',{body:{user_id:id}});
+ if(error){alert('Löschen fehlgeschlagen: '+error.message);return}
+ alert(data?.message||'Benutzerkonto wurde gelöscht.');
+ await loadTeam();
 }
 
 async function logout(){
  if(db)await db.auth.signOut();
- currentUser=null;
- currentProfile=null;
+ currentUser=null;currentProfile=null;
  if(dutyInterval)clearInterval(dutyInterval);
+ if(accessCheckInterval)clearInterval(accessCheckInterval);
  location.reload();
 }
 
 function showPage(id){
- document.querySelectorAll('.page').forEach(
-  page=>page.classList.add('hidden')
- );
-
- if(id==='team'&&(!currentProfile||currentProfile.role!=='owner')){
-  alert('Nur der Owner darf die Teamverwaltung öffnen.');
-  return;
- }
-
+ document.querySelectorAll('.page').forEach(page=>page.classList.add('hidden'));
+ if(id==='team'&&!isOwner()){alert('Nur der Owner darf die Teamverwaltung öffnen.');return}
  document.getElementById(id).classList.remove('hidden');
-
  if(id==='sanctions')loadSanctions();
  if(id==='notes')loadNotes();
  if(id==='team')loadTeam();
- if(id==='duty'){
-  loadMyDuty();
-  loadDutyOverview();
- }
+ if(id==='duty'){loadMyDuty();loadDutyOverview()}
 }
 
 window.addEventListener('load',()=>{
- const url=localStorage.getItem('hcrp_url');
- const key=localStorage.getItem('hcrp_key');
-
+ const url=localStorage.getItem('hcrp_url'),key=localStorage.getItem('hcrp_key');
  if(url&&key){
   db=window.supabase.createClient(url,key);
   document.getElementById('setup').classList.add('hidden');
@@ -1056,6 +635,5 @@ window.addEventListener('load',()=>{
  }
 });
 </script>
-
 </body>
 </html>
