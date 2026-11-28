@@ -149,12 +149,14 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 
 <div id="notes" class="card page hidden">
 <h2>Interne Notizen</h2>
-<p class="status">Alle freigeschalteten Teammitglieder dürfen Notizen erstellen und ansehen.</p>
+<p class="status">Alle freigeschalteten Teammitglieder dürfen Notizen erstellen und ansehen. Management, Owner und Leitungsebene dürfen Notizen löschen.</p>
+
 <h3>Neue Notiz erstellen</h3>
 <label>Titel</label><input id="noteTitle" placeholder="Titel der Notiz">
 <label>Notiz</label><textarea id="noteDetails" placeholder="Schreibe hier deine Notiz..."></textarea>
 <button onclick="createNote()">Notiz speichern</button>
 <p id="noteMessage" class="status"></p>
+
 <hr><h3>Alle Notizen</h3>
 <button onclick="loadNotes()">Notizen aktualisieren</button>
 <div id="noteList"></div>
@@ -162,7 +164,22 @@ hr{border:0;border-top:1px solid #29415f;margin:25px 0}
 
 <div id="announcements" class="card page hidden">
 <h2>Ankündigungen</h2>
-<div class="record"><strong>Willkommen im Team!</strong><p>Willkommen im internen Bereich von Hamburg City RP.</p><p class="small">Weitere Ankündigungen können später ergänzt werden.</p></div>
+<p class="status">Hier findest du wichtige Informationen und Mitteilungen der Serverleitung.</p>
+
+<div id="announcementCreateArea" class="hidden">
+<h3>Neue Ankündigung erstellen</h3>
+<label>Überschrift</label>
+<input id="announcementTitle" maxlength="120" placeholder="Titel der Ankündigung">
+<label>Nachricht</label>
+<textarea id="announcementDetails" placeholder="Schreibe hier deine Ankündigung..."></textarea>
+<button onclick="createAnnouncement()">Ankündigung veröffentlichen</button>
+<p id="announcementMessage" class="status"></p>
+<hr>
+</div>
+
+<h3>Alle Ankündigungen</h3>
+<button onclick="loadAnnouncements()">Ankündigungen aktualisieren</button>
+<div id="announcementList"></div>
 </div>
 
 <div id="handbook" class="card page hidden">
@@ -370,6 +387,8 @@ async function openDashboard(user){
  document.getElementById('linkDiscordButton').classList.toggle('hidden',data.role!=='owner');
  document.getElementById('membersNavButton').classList.toggle('hidden',!canManageMembers());
 
+ document.getElementById('announcementCreateArea').classList.toggle('hidden',!canManage());
+
  document.querySelector('#actionType option[value="kick"]').disabled=!isModerator();
  document.querySelector('#actionType option[value="ban"]').disabled=!isModerator();
 
@@ -378,6 +397,7 @@ async function openDashboard(user){
   await checkDiscordLink();
   await loadSanctions();
   await loadNotes();
+  await loadAnnouncements();
   await loadMyDuty();
   accessCheckInterval=setInterval(checkCurrentAccess,30000);
  }
@@ -530,8 +550,234 @@ async function loadNotes(){
   const details=document.createElement('p');details.textContent=note.details||'';card.appendChild(details);
   const date=document.createElement('p');date.className='small';
   date.textContent='Erstellt: '+(note.created_at?new Date(note.created_at).toLocaleString('de-DE'):'Unbekannt');card.appendChild(date);
+
+  if(canManage()){
+   const del=document.createElement('button');
+   del.className='danger';
+   del.textContent='Notiz löschen';
+   del.onclick=()=>deleteNote(note.id);
+   card.appendChild(del);
+  }
+
   list.appendChild(card);
  });
+}
+
+async function deleteNote(id){
+ if(!canManage()){
+  alert('Nur Management, Owner und Leitungsebene dürfen Notizen löschen.');
+  return;
+ }
+
+ if(!confirm('Möchtest du diese Notiz wirklich dauerhaft löschen?'))return;
+
+ const {data,error}=await db.from('staff_records')
+ .delete()
+ .eq('id',id)
+ .eq('module','note')
+ .select('id')
+ .maybeSingle();
+
+ if(error){
+  alert('Fehler beim Löschen: '+error.message);
+  return;
+ }
+
+ if(!data){
+  alert('Die Notiz wurde nicht gelöscht. Bitte prüfe die Supabase-Berechtigungen.');
+  return;
+ }
+
+ alert('Notiz erfolgreich gelöscht.');
+ await loadNotes();
+}
+
+// ANKÜNDIGUNGEN
+async function createAnnouncement(){
+ const message=document.getElementById('announcementMessage');
+
+ if(!currentUser||!canManage()){
+  message.textContent='Nur Management, Owner und Leitungsebene dürfen Ankündigungen erstellen.';
+  return;
+ }
+
+ const title=document.getElementById('announcementTitle').value.trim();
+ const details=document.getElementById('announcementDetails').value.trim();
+
+ if(!title||!details){
+  message.textContent='Bitte Überschrift und Nachricht ausfüllen.';
+  return;
+ }
+
+ message.textContent='Ankündigung wird veröffentlicht...';
+
+ const {error}=await db.from('staff_records').insert({
+  module:'announcement',
+  title:title,
+  details:details,
+  status:'open',
+  created_by:currentUser.id
+ });
+
+ if(error){
+  message.textContent='Fehler beim Veröffentlichen: '+error.message;
+  return;
+ }
+
+ document.getElementById('announcementTitle').value='';
+ document.getElementById('announcementDetails').value='';
+ message.textContent='Ankündigung erfolgreich veröffentlicht.';
+
+ await loadAnnouncements();
+}
+
+async function loadAnnouncements(){
+ const list=document.getElementById('announcementList');
+ if(!list||!currentProfile)return;
+
+ list.textContent='Ankündigungen werden geladen...';
+
+ const {data,error}=await db.from('staff_records')
+ .select('id,title,details,created_by,created_at')
+ .eq('module','announcement')
+ .order('created_at',{ascending:false});
+
+ if(error){
+  list.textContent='Fehler beim Laden der Ankündigungen: '+error.message;
+  return;
+ }
+
+ list.innerHTML='';
+
+ if(!data||!data.length){
+  list.textContent='Aktuell gibt es keine Ankündigungen.';
+  return;
+ }
+
+ data.forEach(announcement=>{
+  const card=document.createElement('div');
+  card.className='record';
+
+  const heading=document.createElement('h3');
+  heading.textContent=announcement.title||'Ankündigung';
+  card.appendChild(heading);
+
+  const details=document.createElement('p');
+  details.style.whiteSpace='pre-wrap';
+  details.textContent=announcement.details||'';
+  card.appendChild(details);
+
+  const date=document.createElement('p');
+  date.className='small';
+  date.textContent='Veröffentlicht: '+(
+   announcement.created_at
+    ?new Date(announcement.created_at).toLocaleString('de-DE')
+    :'Unbekannt'
+  );
+  card.appendChild(date);
+
+  const creator=document.createElement('p');
+  creator.className='small';
+  creator.textContent='Erstellt von: '+(
+   announcement.created_by===currentUser.id
+    ?'Dir'
+    :'Serverleitung'
+  );
+  card.appendChild(creator);
+
+  if(canManage()){
+   const editButton=document.createElement('button');
+   editButton.textContent='Bearbeiten';
+   editButton.onclick=()=>editAnnouncement(
+    announcement.id,
+    announcement.title||'',
+    announcement.details||''
+   );
+   card.appendChild(editButton);
+
+   const deleteButton=document.createElement('button');
+   deleteButton.className='danger';
+   deleteButton.textContent='Ankündigung löschen';
+   deleteButton.onclick=()=>deleteAnnouncement(announcement.id);
+   card.appendChild(deleteButton);
+  }
+
+  list.appendChild(card);
+ });
+}
+
+async function editAnnouncement(id,oldTitle,oldDetails){
+ if(!canManage()){
+  alert('Nur Management, Owner und Leitungsebene dürfen Ankündigungen bearbeiten.');
+  return;
+ }
+
+ const newTitle=prompt('Neue Überschrift der Ankündigung:',oldTitle);
+ if(newTitle===null)return;
+
+ const title=newTitle.trim();
+ if(!title){
+  alert('Die Überschrift darf nicht leer sein.');
+  return;
+ }
+
+ const newDetails=prompt('Neue Nachricht der Ankündigung:',oldDetails);
+ if(newDetails===null)return;
+
+ const details=newDetails.trim();
+ if(!details){
+  alert('Die Nachricht darf nicht leer sein.');
+  return;
+ }
+
+ const {data,error}=await db.from('staff_records')
+ .update({title:title,details:details})
+ .eq('id',id)
+ .eq('module','announcement')
+ .select('id')
+ .maybeSingle();
+
+ if(error){
+  alert('Ankündigung konnte nicht bearbeitet werden: '+error.message);
+  return;
+ }
+
+ if(!data){
+  alert('Die Änderung wurde nicht gespeichert. Bitte prüfe die Supabase-Berechtigungen.');
+  return;
+ }
+
+ alert('Ankündigung erfolgreich bearbeitet.');
+ await loadAnnouncements();
+}
+
+async function deleteAnnouncement(id){
+ if(!canManage()){
+  alert('Nur Management, Owner und Leitungsebene dürfen Ankündigungen löschen.');
+  return;
+ }
+
+ if(!confirm('Möchtest du diese Ankündigung wirklich dauerhaft löschen?'))return;
+
+ const {data,error}=await db.from('staff_records')
+ .delete()
+ .eq('id',id)
+ .eq('module','announcement')
+ .select('id')
+ .maybeSingle();
+
+ if(error){
+  alert('Fehler beim Löschen: '+error.message);
+  return;
+ }
+
+ if(!data){
+  alert('Die Ankündigung wurde nicht gelöscht. Bitte prüfe die Supabase-Berechtigungen.');
+  return;
+ }
+
+ alert('Ankündigung erfolgreich gelöscht.');
+ await loadAnnouncements();
 }
 
 // DIENSTZEITEN
@@ -1014,6 +1260,7 @@ function showPage(id){
 
  if(id==='sanctions')loadSanctions();
  if(id==='notes')loadNotes();
+ if(id==='announcements')loadAnnouncements();
  if(id==='members')loadMembers();
  if(id==='duty'){loadMyDuty();loadDutyOverview()}
 }
